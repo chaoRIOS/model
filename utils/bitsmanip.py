@@ -83,9 +83,15 @@ def encode_float32(num):
 
 def decode_float32(hex_str):
     return unpack_float32(pack_uint32(eval(hex_str)) )
-    # it should be uint32 here, not int32, 
+    # it should be 'pack_uint32' here, not 'pack_int32', 
     # since eval() only generate unsigned numbers
-    # but the result bytes comes the same
+    # from hex repr like '0xffffffff' will not be -1
+
+def encode_float64(num):
+    return bytes_to_hex(pack_float64(num) )
+
+def decode_float64(hex_str):
+    return unpack_float64(pack_uint64(eval(hex_str)) )
 
 def encode_int32(num):
     return bytes_to_hex(pack_int32(num) )
