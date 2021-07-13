@@ -22,6 +22,7 @@ def test_float32():
     encoding_check(encode_float32, decode_float32,  255.0)
     encoding_check(encode_float64, decode_float64,  np.finfo('f').max )
     encoding_check(encode_float64, decode_float64,  np.finfo('f').min )
+    encoding_check(encode_float64, decode_float64,  np.finfo('f').tiny )
 
 @pytest.mark.xfail(reason="wrong type")
 def test_float32_types():
@@ -37,6 +38,7 @@ def test_float64():
     encoding_check(encode_float64, decode_float64, -1.0)
     encoding_check(encode_float64, decode_float64,  np.finfo('d').max )
     encoding_check(encode_float64, decode_float64,  np.finfo('d').min )
+    encoding_check(encode_float64, decode_float64,  np.finfo('d').tiny )
 
 @pytest.mark.xfail(reason="wrong type")
 def test_float64_types():

@@ -11,7 +11,7 @@ import struct
 
 # ------------------- 
 # pack functions
-# number to bytes
+# numbers to bytes
 # -------------------
 
 def pack_int32(num):
@@ -67,10 +67,13 @@ def bytes_to_bin(bytes):
 def bytes_to_hex(bytes):
     return '0x' + ''.join('{:0>2x}'.format(byte) for byte in bytes)
 
-def str_to_bytes_32(byte_str):
+# it should be 'pack_uint32/64' here, not 'pack_int32/64', 
+# since eval() only generate unsigned numbers
+# from hex repr like '0xffffffff' will not be -1
+def str_to_bytes_32(hex_str):
     return pack_uint32(eval(hex_str)) 
     
-def str_to_bytes_64(byte_str):
+def str_to_bytes_64(hex_str):
     return pack_uint64(eval(hex_str)) 
 
 # ------------------- -----
@@ -82,7 +85,7 @@ def encode_float32(num):
     return bytes_to_hex(pack_float32(num) )
 
 def decode_float32(hex_str):
-    return unpack_float32(pack_uint32(eval(hex_str)) )
+    return unpack_float32(str_to_bytes_32(hex_str) )
     # it should be 'pack_uint32' here, not 'pack_int32', 
     # since eval() only generate unsigned numbers
     # from hex repr like '0xffffffff' will not be -1
@@ -91,33 +94,33 @@ def encode_float64(num):
     return bytes_to_hex(pack_float64(num) )
 
 def decode_float64(hex_str):
-    return unpack_float64(pack_uint64(eval(hex_str)) )
+    return unpack_float64(str_to_bytes_64(hex_str) )
 
 def encode_int32(num):
     return bytes_to_hex(pack_int32(num) )
     
 def decode_int32(hex_str):
-    return unpack_int32(pack_uint32(eval(hex_str)) )
+    return unpack_int32(str_to_bytes_32(hex_str) )
     
     
 def encode_uint32(num):
     return bytes_to_hex(pack_uint32(num) )
     
 def decode_uint32(hex_str):
-    return unpack_uint32( pack_uint32(eval(hex_str)) )
+    return unpack_uint32( str_to_bytes_32(hex_str) )
     
     
 def encode_int64(num):
     return bytes_to_hex(pack_int64(num) )
     
 def decode_int64(hex_str):
-    return unpack_int64(pack_uint64(eval(hex_str)) )
+    return unpack_int64(str_to_bytes_64(hex_str) )
     
 def encode_uint64(num):
     return bytes_to_hex(pack_uint64(num) )
     
 def decode_uint64(hex_str):
-    return unpack_uint64(pack_uint64(eval(hex_str)) )    
+    return unpack_uint64(str_to_bytes_64(hex_str) )    
     
     
     
