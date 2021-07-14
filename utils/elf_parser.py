@@ -1,6 +1,6 @@
 #====================================================
 # file:       elf_parser.py
-# created by: cs
+# created by: chao wang
 # notes:      to wrap rust-implemented elf parser
 #====================================================
 
