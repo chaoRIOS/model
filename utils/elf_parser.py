@@ -4,7 +4,7 @@
 # notes:      to wrap rust-implemented elf parser
 #====================================================
 
-import elfparser
+from . import elfparser
 
 # ------------------- 
 # Load elf file into Python object

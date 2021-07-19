@@ -1,4 +1,4 @@
-from utils.elfparser import *
+from utils.elf_parser import *
 
 
 def test_load_elf():
