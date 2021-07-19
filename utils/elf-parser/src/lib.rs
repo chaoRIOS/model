@@ -9,7 +9,7 @@ use elf_analyzer::ElfAnalyzer;
 use memory::Memory;
 
 #[pymodule]
-fn elfparser(py: Python, m: &PyModule) -> PyResult<()> {
+fn elfparser(_py: Python, m: &PyModule) -> PyResult<()> {
     // PyO3 aware function. All of our Python interfaces could be declared in a separate module.
     // Note that the `#[pyfn()]` annotation automatically converts the arguments from
     // Python objects to Rust values, and the Rust return value back into a Python object.
