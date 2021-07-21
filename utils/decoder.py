@@ -3,24 +3,26 @@
 # created by: chao wang
 # notes:      to wrap rust-implemented decoder
 #====================================================
-from . import elfparser
-
 from . import rustdecoder
 
 # ------------------- 
-# Load elf file into Python object
+# Decode word to instruction
 # 
 # Args:
-#   `elf_path`: path to elf file
-#   `memory_capacity`: allocated capacity for program
+#   `word`: 32-bit fetched raw data
 # 
 # Return value:
-# struct ElfContext {
-#     memory: Memory{
-#         data: Vec<u64>,
+# struct DecodingResultPy {
+#     inst: InstructionPy{
+#         name: String,
+#         imm: i32,
+#         zimm: u32,
+#         shamt: i32,
+#         pred_succ: (u32,u32),
+#         read_reg: [(String,u32)],
+#         write_reg: [(String,u32)],
 #     },
-#     entry_pc: u64,
-#     tohost_addr: u64,
+#     decode_error: String,
 # }
 # -------------------
 
