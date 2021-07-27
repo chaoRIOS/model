@@ -1,5 +1,5 @@
 from utils.elf_parser import *
-
+import pytest  
 
 def test_load_elf():
     data = load_elf('/opt/riscv-tests/coremark/coremark.riscv', 2049*1024*1024)
