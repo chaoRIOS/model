@@ -39,4 +39,5 @@ Available modules:
 |Module name|Python wrapper|Path|
 |:-:|:-:|:-:|
 |elfparser|`utils/elf_parser.py` |`utils/elf-parser/` |
+|decoder|`utils/decoder_warpper.py` |`utils/decoder/` |
 
