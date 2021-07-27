@@ -1,5 +1,5 @@
 #====================================================
-# file:       decoder.py
+# file:       decoder_wrapper.py
 # created by: chao wang
 # notes:      to wrap rust-implemented decoder
 #====================================================
