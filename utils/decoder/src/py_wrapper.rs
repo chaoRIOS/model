@@ -1,6 +1,7 @@
 use pyo3::class::basic::PyObjectProtocol;
 use pyo3::prelude::*;
 
+use crate::csr_address;
 use crate::decode;
 use crate::instruction::Instruction;
 
@@ -488,12 +489,36 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                     }
                     Instruction::Uret => {
                         result_inst.name = String::from("URET");
+                        result_inst.read_reg = Some(vec![
+                            (String::from("csr"), csr_address::CSR_UEPC_ADDRESS as u32),
+                            (String::from("csr"), csr_address::CSR_USTATUS_ADDRESS as u32),
+                        ]);
+                        result_inst.write_reg = Some(vec![(
+                            String::from("csr"),
+                            csr_address::CSR_USTATUS_ADDRESS as u32,
+                        )]);
                     }
                     Instruction::Sret => {
                         result_inst.name = String::from("SRET");
+                        result_inst.read_reg = Some(vec![
+                            (String::from("csr"), csr_address::CSR_SEPC_ADDRESS as u32),
+                            (String::from("csr"), csr_address::CSR_SSTATUS_ADDRESS as u32),
+                        ]);
+                        result_inst.write_reg = Some(vec![(
+                            String::from("csr"),
+                            csr_address::CSR_SSTATUS_ADDRESS as u32,
+                        )]);
                     }
                     Instruction::Mret => {
                         result_inst.name = String::from("MRET");
+                        result_inst.read_reg = Some(vec![
+                            (String::from("csr"), csr_address::CSR_MEPC_ADDRESS as u32),
+                            (String::from("csr"), csr_address::CSR_MSTATUS_ADDRESS as u32),
+                        ]);
+                        result_inst.write_reg = Some(vec![(
+                            String::from("csr"),
+                            csr_address::CSR_MSTATUS_ADDRESS as u32,
+                        )]);
                     }
                     Instruction::Wfi => {
                         result_inst.name = String::from("WFI");
@@ -512,8 +537,10 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                             (String::from("csr"), csr_type_inst.csr()),
                             (String::from("int"), csr_type_inst.rs1()),
                         ]);
-                        result_inst.write_reg =
-                            Some(vec![(String::from("int"), csr_type_inst.rd())]);
+                        result_inst.write_reg = Some(vec![
+                            (String::from("csr"), csr_type_inst.csr()),
+                            (String::from("int"), csr_type_inst.rd()),
+                        ]);
                     }
                     Instruction::Csrrs(csr_type_inst) => {
                         result_inst.name = String::from("CSRRS");
@@ -521,8 +548,10 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                             (String::from("csr"), csr_type_inst.csr()),
                             (String::from("int"), csr_type_inst.rs1()),
                         ]);
-                        result_inst.write_reg =
-                            Some(vec![(String::from("int"), csr_type_inst.rd())]);
+                        result_inst.write_reg = Some(vec![
+                            (String::from("csr"), csr_type_inst.csr()),
+                            (String::from("int"), csr_type_inst.rd()),
+                        ]);
                     }
                     Instruction::Csrrc(csr_type_inst) => {
                         result_inst.name = String::from("CSRRC");
@@ -530,32 +559,40 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                             (String::from("csr"), csr_type_inst.csr()),
                             (String::from("int"), csr_type_inst.rs1()),
                         ]);
-                        result_inst.write_reg =
-                            Some(vec![(String::from("int"), csr_type_inst.rd())]);
+                        result_inst.write_reg = Some(vec![
+                            (String::from("csr"), csr_type_inst.csr()),
+                            (String::from("int"), csr_type_inst.rd()),
+                        ]);
                     }
                     Instruction::Csrrwi(csri_type_inst) => {
                         result_inst.name = String::from("CSRRWI");
                         result_inst.zimm = Some(csri_type_inst.zimm());
                         result_inst.read_reg =
                             Some(vec![(String::from("csr"), csri_type_inst.csr())]);
-                        result_inst.write_reg =
-                            Some(vec![(String::from("int"), csri_type_inst.rd())]);
+                        result_inst.write_reg = Some(vec![
+                            (String::from("csr"), csri_type_inst.csr()),
+                            (String::from("int"), csri_type_inst.rd()),
+                        ]);
                     }
                     Instruction::Csrrsi(csri_type_inst) => {
                         result_inst.name = String::from("CSRRSI");
                         result_inst.zimm = Some(csri_type_inst.zimm());
                         result_inst.read_reg =
                             Some(vec![(String::from("csr"), csri_type_inst.csr())]);
-                        result_inst.write_reg =
-                            Some(vec![(String::from("int"), csri_type_inst.rd())]);
+                        result_inst.write_reg = Some(vec![
+                            (String::from("csr"), csri_type_inst.csr()),
+                            (String::from("int"), csri_type_inst.rd()),
+                        ]);
                     }
                     Instruction::Csrrci(csri_type_inst) => {
                         result_inst.name = String::from("CSRRCI");
                         result_inst.zimm = Some(csri_type_inst.zimm());
                         result_inst.read_reg =
                             Some(vec![(String::from("csr"), csri_type_inst.csr())]);
-                        result_inst.write_reg =
-                            Some(vec![(String::from("int"), csri_type_inst.rd())]);
+                        result_inst.write_reg = Some(vec![
+                            (String::from("csr"), csri_type_inst.csr()),
+                            (String::from("int"), csri_type_inst.rd()),
+                        ]);
                     }
 
                     // OP-imm 32

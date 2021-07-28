@@ -1,0 +1,57 @@
+pub const CSR_USTATUS_ADDRESS: u16 = 0x000;
+pub const CSR_FFLAGS_ADDRESS: u16 = 0x001;
+pub const CSR_FRM_ADDRESS: u16 = 0x002;
+pub const CSR_FCSR_ADDRESS: u16 = 0x003;
+pub const CSR_UIE_ADDRESS: u16 = 0x004;
+pub const CSR_UTVEC_ADDRESS: u16 = 0x005;
+pub const CSR_USCRATCH_ADDRESS: u16 = 0x040;
+pub const CSR_UEPC_ADDRESS: u16 = 0x041;
+pub const CSR_UCAUSE_ADDRESS: u16 = 0x042;
+pub const CSR_UTVAL_ADDRESS: u16 = 0x043;
+pub const CSR_UIP_ADDRESS: u16 = 0x044;
+pub const CSR_SSTATUS_ADDRESS: u16 = 0x100;
+pub const CSR_SEDELEG_ADDRESS: u16 = 0x102;
+pub const CSR_SIDELEG_ADDRESS: u16 = 0x103;
+pub const CSR_SIE_ADDRESS: u16 = 0x104;
+pub const CSR_STVEC_ADDRESS: u16 = 0x105;
+pub const CSR_SSCRATCH_ADDRESS: u16 = 0x140;
+pub const CSR_SEPC_ADDRESS: u16 = 0x141;
+pub const CSR_SCAUSE_ADDRESS: u16 = 0x142;
+pub const CSR_STVAL_ADDRESS: u16 = 0x143;
+pub const CSR_SIP_ADDRESS: u16 = 0x144;
+pub const CSR_SATP_ADDRESS: u16 = 0x180;
+pub const CSR_MSTATUS_ADDRESS: u16 = 0x300;
+pub const CSR_MISA_ADDRESS: u16 = 0x301;
+pub const CSR_MEDELEG_ADDRESS: u16 = 0x302;
+pub const CSR_MIDELEG_ADDRESS: u16 = 0x303;
+pub const CSR_MIE_ADDRESS: u16 = 0x304;
+
+pub const CSR_MTVEC_ADDRESS: u16 = 0x305;
+pub const CSR_MSCRATCH_ADDRESS: u16 = 0x340;
+pub const CSR_MEPC_ADDRESS: u16 = 0x341;
+pub const CSR_MCAUSE_ADDRESS: u16 = 0x342;
+pub const CSR_MTVAL_ADDRESS: u16 = 0x343;
+pub const CSR_MIP_ADDRESS: u16 = 0x344;
+pub const CSR_PMPCFG0_ADDRESS: u16 = 0x3a0;
+pub const CSR_PMPADDR0_ADDRESS: u16 = 0x3b0;
+pub const CSR_MCYCLE_ADDRESS: u16 = 0xb00;
+pub const CSR_MINSTRET_ADDRESS: u16 = 0xb02;
+pub const CSR_CYCLE_ADDRESS: u16 = 0xc00;
+pub const CSR_TIME_ADDRESS: u16 = 0xc01;
+pub const CSR_INSTRET_ADDRESS: u16 = 0xc02;
+
+pub const CSR_HPMCOUNTER3_ADDRESS: u16 = 0xc03;
+pub const CSR_HPMCOUNTER4_ADDRESS: u16 = 0xc04;
+pub const CSR_HPMCOUNTER5_ADDRESS: u16 = 0xc05;
+pub const CSR_HPMCOUNTER6_ADDRESS: u16 = 0xc06;
+pub const CSR_HPMCOUNTER7_ADDRESS: u16 = 0xc07;
+pub const CSR_HPMCOUNTER8_ADDRESS: u16 = 0xc08;
+
+pub const CSR_MHARTID_ADDRESS: u16 = 0xf14;
+
+pub const MIP_MEIP: u64 = 0x800;
+pub const MIP_MTIP: u64 = 0x080;
+pub const MIP_MSIP: u64 = 0x008;
+pub const MIP_SEIP: u64 = 0x200;
+pub const MIP_STIP: u64 = 0x020;
+pub const MIP_SSIP: u64 = 0x002;

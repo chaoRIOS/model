@@ -1,4 +1,5 @@
 mod compressed;
+pub mod csr_address;
 mod instruction;
 mod py_wrapper;
 pub mod types;
