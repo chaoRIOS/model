@@ -4,7 +4,7 @@
 # notes:      to wrap rust-implemented decoder
 #====================================================
 from . import rustdecoder
-
+import numpy as np
 # ------------------- 
 # Decode word to instruction
 # 
@@ -41,7 +41,19 @@ def decode(word):
             'read_regs':instruction.read_reg,
             'write_regs':instruction.write_reg,
         }
+        if data['imm'] is not None:
+            data['imm'] = [data['imm']]
+        elif data['zimm'] is not None:
+            data['imm'], data['zimm'] = [data['zimm']], None
+        elif data['shamt'] is not None:
+            data['imm'], data['shamt'] = [data['shamt']], None
+        elif data['pred_succ'] is not None:
+            data['imm'], data['pred_succ'] = list(data['pred_succ']), None
+
         data = {k: v for k,v in data.items() if v is not None}
+
+        if 'imm' in data:
+            data['imm'] = [np.uint64(i) for i in data['imm']]
 
         # Reorganize registers data format
         if 'read_regs' in data:
