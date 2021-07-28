@@ -1,10 +1,11 @@
 import numpy as np
-
+import warnings
 
 reg_type = np.uint64
 
 
 def LUI(data):
+    data["write_regs"]["int"][0]["value"] = data["imm"][0] << reg_type(12)
     return data
 
 def AUIPC(data):
@@ -256,27 +257,29 @@ def REMU(data):
     return data
 
 def FENCE(data):
-    raise UserWarning("not supported")
+    warnings.warn("not supported", UserWarning)
     return data
 
 def FENCEI(data):
-    raise UserWarning("not supported")
+    warnings.warn("not supported", UserWarning)
     return data
 
 def ECALL(data):
-    raise UserWarning("not supported")
+    warnings.warn("not supported", UserWarning)
     return data
 
 def EBREAK(data):
-    raise UserWarning("not supported")
+    warnings.warn("not supported", UserWarning)
     return data
 
 def URET(data):
-    raise UserWarning("not supported")
+    data["next_pc"] = data["read_regs"]["csr"][0]["value"] 
+    warnings.warn("not supported", UserWarning)
     return data
 
 def SRET(data):
-    raise UserWarning("not supported")
+    data["next_pc"] = data["read_regs"]["csr"][0]["value"] 
+    warnings.warn("not supported", UserWarning)
     return data
 
 # mret
@@ -288,7 +291,10 @@ def MRET(data):
     # pc = CSRs[mepc]
     data["next_pc"] = data["read_regs"]["csr"][0]["value"] 
     # previllage = CSRs[mstatus].MPP
-    raise UserWarning("not supported: no previllage definition yet") 
+    warnings.warn("not supported: no previllage definition yet", UserWarning)
+    # TODO: temp
+    del data['write_regs'] 
+    
     # CSRs[mstatus].MIE = CSRs[mstatus].MPIE, 
     # data["write_regs"]["csr"][0]["value"] = data["read_regs"]["csr"][1]["value"]
     # CSRs[mstatus].MPIE =1
@@ -296,11 +302,11 @@ def MRET(data):
     return data
 
 def WFI(data):
-    raise UserWarning("not supported")
+    warnings.warn("not supported", UserWarning)
     return data
 
 def SFENCEVMA(data):
-    raise UserWarning("not supported")
+    warnings.warn("not supported", UserWarning)
     return data
 
 # register sequence:
@@ -408,7 +414,7 @@ def REMUW(data):
 
 insn_dict = {}
 
-with open("config/insn_list_rv64i.txt") as insn_file:
+with open("../config/insn_list_rv64i.txt") as insn_file:
     for line in insn_file:
         insn_name = line.split()[0]
         insn_dict[insn_name] = eval(insn_name)
