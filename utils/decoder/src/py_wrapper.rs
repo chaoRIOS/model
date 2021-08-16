@@ -52,22 +52,22 @@ pub struct InstructionPy {
     #[pyo3(get)]
     pub name: String,
     #[pyo3(get)]
-    pub imm: Option<i32>,
+    pub imm: Option<i64>,
     #[pyo3(get)]
-    pub zimm: Option<u32>,
+    pub zimm: Option<u64>,
     #[pyo3(get)]
-    pub shamt: Option<i32>,
+    pub shamt: Option<i64>,
     #[pyo3(get)]
-    pub pred_succ: Option<(u32, u32)>,
+    pub pred_succ: Option<(u64, u64)>,
     #[pyo3(get)]
-    pub read_reg: Option<Vec<(String, u32)>>,
+    pub read_reg: Option<Vec<(String, u64)>>,
     #[pyo3(get)]
-    pub write_reg: Option<Vec<(String, u32)>>,
+    pub write_reg: Option<Vec<(String, u64)>>,
     // @TODO: Load/Store decoding
     // #[pyo3(get)]
-    // pub load_mem: Option<Vec<(u32, u32)>>,
+    // pub load_mem: Option<Vec<(u64, u64)>>,
     // #[pyo3(get)]
-    // pub store_mem: Option<Vec<(u32, u32)>>,
+    // pub store_mem: Option<Vec<(u64, u64)>>,
 }
 
 #[pymethods]
@@ -107,28 +107,28 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                 match inst {
                     // LUI
                     Instruction::Lui(u_type_inst) => {
-                        result_inst.imm = Some(u_type_inst.imm() as i32);
+                        result_inst.imm = Some(u_type_inst.imm() as i64);
                         result_inst.write_reg = Some(vec![(String::from("int"), u_type_inst.rd())]);
                         result_inst.name = String::from("LUI");
                     }
 
                     // AUIPC
                     Instruction::Auipc(u_type_inst) => {
-                        result_inst.imm = Some(u_type_inst.imm() as i32);
+                        result_inst.imm = Some(u_type_inst.imm() as i64);
                         result_inst.write_reg = Some(vec![(String::from("int"), u_type_inst.rd())]);
                         result_inst.name = String::from("AUIPC");
                     }
 
                     // Jal
                     Instruction::Jal(j_type_inst) => {
-                        result_inst.imm = Some(j_type_inst.imm() as i32);
+                        result_inst.imm = Some(j_type_inst.imm() as i64);
                         result_inst.write_reg = Some(vec![(String::from("int"), j_type_inst.rd())]);
                         result_inst.name = String::from("JAL");
                     }
 
                     // Jalr
                     Instruction::Jalr(i_type_inst) => {
-                        result_inst.imm = Some(i_type_inst.imm() as i32);
+                        result_inst.imm = Some(i_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![(String::from("int"), i_type_inst.rs1())]);
                         result_inst.write_reg = Some(vec![(String::from("int"), i_type_inst.rd())]);
                         result_inst.name = String::from("JALR");
@@ -136,7 +136,7 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
 
                     // Branch
                     Instruction::Beq(b_type_inst) => {
-                        result_inst.imm = Some(b_type_inst.imm() as i32);
+                        result_inst.imm = Some(b_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![
                             (String::from("int"), b_type_inst.rs1()),
                             (String::from("int"), b_type_inst.rs2()),
@@ -144,7 +144,7 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                         result_inst.name = String::from("BEQ");
                     }
                     Instruction::Bne(b_type_inst) => {
-                        result_inst.imm = Some(b_type_inst.imm() as i32);
+                        result_inst.imm = Some(b_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![
                             (String::from("int"), b_type_inst.rs1()),
                             (String::from("int"), b_type_inst.rs2()),
@@ -152,7 +152,7 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                         result_inst.name = String::from("BNE");
                     }
                     Instruction::Blt(b_type_inst) => {
-                        result_inst.imm = Some(b_type_inst.imm() as i32);
+                        result_inst.imm = Some(b_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![
                             (String::from("int"), b_type_inst.rs1()),
                             (String::from("int"), b_type_inst.rs2()),
@@ -160,7 +160,7 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                         result_inst.name = String::from("BLT");
                     }
                     Instruction::Bge(b_type_inst) => {
-                        result_inst.imm = Some(b_type_inst.imm() as i32);
+                        result_inst.imm = Some(b_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![
                             (String::from("int"), b_type_inst.rs1()),
                             (String::from("int"), b_type_inst.rs2()),
@@ -168,7 +168,7 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                         result_inst.name = String::from("BGE");
                     }
                     Instruction::Bltu(b_type_inst) => {
-                        result_inst.imm = Some(b_type_inst.imm() as i32);
+                        result_inst.imm = Some(b_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![
                             (String::from("int"), b_type_inst.rs1()),
                             (String::from("int"), b_type_inst.rs2()),
@@ -176,7 +176,7 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                         result_inst.name = String::from("BLTU");
                     }
                     Instruction::Bgeu(b_type_inst) => {
-                        result_inst.imm = Some(b_type_inst.imm() as i32);
+                        result_inst.imm = Some(b_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![
                             (String::from("int"), b_type_inst.rs1()),
                             (String::from("int"), b_type_inst.rs2()),
@@ -186,43 +186,43 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
 
                     // Load
                     Instruction::Lb(i_type_inst) => {
-                        result_inst.imm = Some(i_type_inst.imm() as i32);
+                        result_inst.imm = Some(i_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![(String::from("int"), i_type_inst.rs1())]);
                         result_inst.write_reg = Some(vec![(String::from("int"), i_type_inst.rd())]);
                         result_inst.name = String::from("LB");
                     }
                     Instruction::Lh(i_type_inst) => {
-                        result_inst.imm = Some(i_type_inst.imm() as i32);
+                        result_inst.imm = Some(i_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![(String::from("int"), i_type_inst.rs1())]);
                         result_inst.write_reg = Some(vec![(String::from("int"), i_type_inst.rd())]);
                         result_inst.name = String::from("LH");
                     }
                     Instruction::Lw(i_type_inst) => {
-                        result_inst.imm = Some(i_type_inst.imm() as i32);
+                        result_inst.imm = Some(i_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![(String::from("int"), i_type_inst.rs1())]);
                         result_inst.write_reg = Some(vec![(String::from("int"), i_type_inst.rd())]);
                         result_inst.name = String::from("LW");
                     }
                     Instruction::Lbu(i_type_inst) => {
-                        result_inst.imm = Some(i_type_inst.imm() as i32);
+                        result_inst.imm = Some(i_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![(String::from("int"), i_type_inst.rs1())]);
                         result_inst.write_reg = Some(vec![(String::from("int"), i_type_inst.rd())]);
                         result_inst.name = String::from("LBU");
                     }
                     Instruction::Lhu(i_type_inst) => {
-                        result_inst.imm = Some(i_type_inst.imm() as i32);
+                        result_inst.imm = Some(i_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![(String::from("int"), i_type_inst.rs1())]);
                         result_inst.write_reg = Some(vec![(String::from("int"), i_type_inst.rd())]);
                         result_inst.name = String::from("LHU");
                     }
                     Instruction::Lwu(i_type_inst) => {
-                        result_inst.imm = Some(i_type_inst.imm() as i32);
+                        result_inst.imm = Some(i_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![(String::from("int"), i_type_inst.rs1())]);
                         result_inst.write_reg = Some(vec![(String::from("int"), i_type_inst.rd())]);
                         result_inst.name = String::from("LWU");
                     }
                     Instruction::Ld(i_type_inst) => {
-                        result_inst.imm = Some(i_type_inst.imm() as i32);
+                        result_inst.imm = Some(i_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![(String::from("int"), i_type_inst.rs1())]);
                         result_inst.write_reg = Some(vec![(String::from("int"), i_type_inst.rd())]);
                         result_inst.name = String::from("LD");
@@ -230,7 +230,7 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
 
                     // Store
                     Instruction::Sb(s_type_inst) => {
-                        result_inst.imm = Some(s_type_inst.imm() as i32);
+                        result_inst.imm = Some(s_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![
                             (String::from("int"), s_type_inst.rs1()),
                             (String::from("int"), s_type_inst.rs2()),
@@ -238,7 +238,7 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                         result_inst.name = String::from("SB");
                     }
                     Instruction::Sh(s_type_inst) => {
-                        result_inst.imm = Some(s_type_inst.imm() as i32);
+                        result_inst.imm = Some(s_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![
                             (String::from("int"), s_type_inst.rs1()),
                             (String::from("int"), s_type_inst.rs2()),
@@ -246,7 +246,7 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                         result_inst.name = String::from("SH");
                     }
                     Instruction::Sw(s_type_inst) => {
-                        result_inst.imm = Some(s_type_inst.imm() as i32);
+                        result_inst.imm = Some(s_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![
                             (String::from("int"), s_type_inst.rs1()),
                             (String::from("int"), s_type_inst.rs2()),
@@ -254,7 +254,7 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                         result_inst.name = String::from("SW");
                     }
                     Instruction::Sd(s_type_inst) => {
-                        result_inst.imm = Some(s_type_inst.imm() as i32);
+                        result_inst.imm = Some(s_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![
                             (String::from("int"), s_type_inst.rs1()),
                             (String::from("int"), s_type_inst.rs2()),
@@ -264,43 +264,43 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
 
                     // OP-imm
                     Instruction::Addi(i_type_inst) => {
-                        result_inst.imm = Some(i_type_inst.imm() as i32);
+                        result_inst.imm = Some(i_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![(String::from("int"), i_type_inst.rs1())]);
                         result_inst.write_reg = Some(vec![(String::from("int"), i_type_inst.rd())]);
                         result_inst.name = String::from("ADDI");
                     }
                     Instruction::Slti(i_type_inst) => {
-                        result_inst.imm = Some(i_type_inst.imm() as i32);
+                        result_inst.imm = Some(i_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![(String::from("int"), i_type_inst.rs1())]);
                         result_inst.write_reg = Some(vec![(String::from("int"), i_type_inst.rd())]);
                         result_inst.name = String::from("SLTI");
                     }
                     Instruction::Sltiu(i_type_inst) => {
-                        result_inst.imm = Some(i_type_inst.imm() as i32);
+                        result_inst.imm = Some(i_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![(String::from("int"), i_type_inst.rs1())]);
                         result_inst.write_reg = Some(vec![(String::from("int"), i_type_inst.rd())]);
                         result_inst.name = String::from("SLTIU");
                     }
                     Instruction::Xori(i_type_inst) => {
-                        result_inst.imm = Some(i_type_inst.imm() as i32);
+                        result_inst.imm = Some(i_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![(String::from("int"), i_type_inst.rs1())]);
                         result_inst.write_reg = Some(vec![(String::from("int"), i_type_inst.rd())]);
                         result_inst.name = String::from("XORI");
                     }
                     Instruction::Ori(i_type_inst) => {
-                        result_inst.imm = Some(i_type_inst.imm() as i32);
+                        result_inst.imm = Some(i_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![(String::from("int"), i_type_inst.rs1())]);
                         result_inst.write_reg = Some(vec![(String::from("int"), i_type_inst.rd())]);
                         result_inst.name = String::from("ORI");
                     }
                     Instruction::Andi(i_type_inst) => {
-                        result_inst.imm = Some(i_type_inst.imm() as i32);
+                        result_inst.imm = Some(i_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![(String::from("int"), i_type_inst.rs1())]);
                         result_inst.write_reg = Some(vec![(String::from("int"), i_type_inst.rd())]);
                         result_inst.name = String::from("ANDI");
                     }
                     Instruction::Slli(shift_type_inst) => {
-                        result_inst.shamt = Some(shift_type_inst.shamt() as i32);
+                        result_inst.shamt = Some(shift_type_inst.shamt() as i64);
                         result_inst.read_reg =
                             Some(vec![(String::from("int"), shift_type_inst.rs1())]);
                         result_inst.write_reg =
@@ -308,7 +308,7 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                         result_inst.name = String::from("SLLI");
                     }
                     Instruction::Srli(shift_type_inst) => {
-                        result_inst.shamt = Some(shift_type_inst.shamt() as i32);
+                        result_inst.shamt = Some(shift_type_inst.shamt() as i64);
                         result_inst.read_reg =
                             Some(vec![(String::from("int"), shift_type_inst.rs1())]);
                         result_inst.write_reg =
@@ -316,7 +316,7 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                         result_inst.name = String::from("SRLI");
                     }
                     Instruction::Srai(shift_type_inst) => {
-                        result_inst.shamt = Some(shift_type_inst.shamt() as i32);
+                        result_inst.shamt = Some(shift_type_inst.shamt() as i64);
                         result_inst.read_reg =
                             Some(vec![(String::from("int"), shift_type_inst.rs1())]);
                         result_inst.write_reg =
@@ -490,34 +490,34 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                     Instruction::Uret => {
                         result_inst.name = String::from("URET");
                         result_inst.read_reg = Some(vec![
-                            (String::from("csr"), csr_address::CSR_UEPC_ADDRESS as u32),
-                            (String::from("csr"), csr_address::CSR_USTATUS_ADDRESS as u32),
+                            (String::from("csr"), csr_address::CSR_UEPC_ADDRESS as u64),
+                            (String::from("csr"), csr_address::CSR_USTATUS_ADDRESS as u64),
                         ]);
                         result_inst.write_reg = Some(vec![(
                             String::from("csr"),
-                            csr_address::CSR_USTATUS_ADDRESS as u32,
+                            csr_address::CSR_USTATUS_ADDRESS as u64,
                         )]);
                     }
                     Instruction::Sret => {
                         result_inst.name = String::from("SRET");
                         result_inst.read_reg = Some(vec![
-                            (String::from("csr"), csr_address::CSR_SEPC_ADDRESS as u32),
-                            (String::from("csr"), csr_address::CSR_SSTATUS_ADDRESS as u32),
+                            (String::from("csr"), csr_address::CSR_SEPC_ADDRESS as u64),
+                            (String::from("csr"), csr_address::CSR_SSTATUS_ADDRESS as u64),
                         ]);
                         result_inst.write_reg = Some(vec![(
                             String::from("csr"),
-                            csr_address::CSR_SSTATUS_ADDRESS as u32,
+                            csr_address::CSR_SSTATUS_ADDRESS as u64,
                         )]);
                     }
                     Instruction::Mret => {
                         result_inst.name = String::from("MRET");
                         result_inst.read_reg = Some(vec![
-                            (String::from("csr"), csr_address::CSR_MEPC_ADDRESS as u32),
-                            (String::from("csr"), csr_address::CSR_MSTATUS_ADDRESS as u32),
+                            (String::from("csr"), csr_address::CSR_MEPC_ADDRESS as u64),
+                            (String::from("csr"), csr_address::CSR_MSTATUS_ADDRESS as u64),
                         ]);
                         result_inst.write_reg = Some(vec![(
                             String::from("csr"),
-                            csr_address::CSR_MSTATUS_ADDRESS as u32,
+                            csr_address::CSR_MSTATUS_ADDRESS as u64,
                         )]);
                     }
                     Instruction::Wfi => {
@@ -597,13 +597,13 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
 
                     // OP-imm 32
                     Instruction::Addiw(i_type_inst) => {
-                        result_inst.imm = Some(i_type_inst.imm() as i32);
+                        result_inst.imm = Some(i_type_inst.imm() as i64);
                         result_inst.read_reg = Some(vec![(String::from("int"), i_type_inst.rs1())]);
                         result_inst.write_reg = Some(vec![(String::from("int"), i_type_inst.rd())]);
                         result_inst.name = String::from("ADDIW");
                     }
                     Instruction::Slliw(shift_type_inst) => {
-                        result_inst.shamt = Some(shift_type_inst.shamt() as i32);
+                        result_inst.shamt = Some(shift_type_inst.shamt() as i64);
                         result_inst.read_reg =
                             Some(vec![(String::from("int"), shift_type_inst.rs1())]);
                         result_inst.write_reg =
@@ -611,7 +611,7 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                         result_inst.name = String::from("SLLIW");
                     }
                     Instruction::Srliw(shift_type_inst) => {
-                        result_inst.shamt = Some(shift_type_inst.shamt() as i32);
+                        result_inst.shamt = Some(shift_type_inst.shamt() as i64);
                         result_inst.read_reg =
                             Some(vec![(String::from("int"), shift_type_inst.rs1())]);
                         result_inst.write_reg =
@@ -619,7 +619,7 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                         result_inst.name = String::from("SRLIW");
                     }
                     Instruction::Sraiw(shift_type_inst) => {
-                        result_inst.shamt = Some(shift_type_inst.shamt() as i32);
+                        result_inst.shamt = Some(shift_type_inst.shamt() as i64);
                         result_inst.read_reg =
                             Some(vec![(String::from("int"), shift_type_inst.rs1())]);
                         result_inst.write_reg =

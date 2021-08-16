@@ -6,41 +6,41 @@ pub fn decode_q00(i: u32) -> DecodingResult {
         0b000 => Err(DecodingError::Unimplemented), // C.ADDI4SPN
         0b001 => Err(DecodingError::Unimplemented), // C.FLD
         0b010 => Ok(Instruction::Lw(IType(
-            ((i & 0x1c00) << 13)      // imm[5:3]
+            (((i & 0x1c00) << 13)      // imm[5:3]
             | ((i & 0x380) << 8)      // rs1[2:0]
             | ((i & 0x40) << 16)      // imm[2]
             | ((i & 0x20) << 21)      // imm[6]
             | ((i & 0x1c) << 5)       // rd[2:0]
-            | 0b_01000_010_01000_0000011,
+            | 0b_01000_010_01000_0000011) as u64,
         ))),
         0b011 => Ok(Instruction::Ld(IType(
             // C.LD (C.FLW in RV32)
-            ((i & 0x1c00) << 13)      // imm[5:3]
+            (((i & 0x1c00) << 13)      // imm[5:3]
             | ((i & 0x380) << 8)      // rs1[2:0]
             | ((i & 0x60) << 21)      // imm[7:6]
             | ((i & 0x1c) << 5)       // rd[2:0]
-            | 0b_01000_011_01000_0000011,
+            | 0b_01000_011_01000_0000011) as u64,
         ))),
         0b100 => Err(DecodingError::Unimplemented), // reserved
         0b101 => Err(DecodingError::Unimplemented), // C.FSD
         0b110 => Ok(Instruction::Sw(SType(
             // C.SW
-            ((i & 0x1000) << 13)      // imm[5]
+            (((i & 0x1000) << 13)      // imm[5]
             | ((i & 0xc00))           // imm[4:3]
             | ((i & 0x380) << 8)      // rs1[2:0]
             | ((i & 0x40) << 3)       // imm[2]
             | ((i & 0x20) << 21)      // imm[6]
             | ((i & 0x1c) << 18)      // rs2[2:0]
-            | 0b_01000_01000_010_00000_0100011,
+            | 0b_01000_01000_010_00000_0100011) as u64,
         ))),
         0b111 => Ok(Instruction::Sd(SType(
             // C.SD (C.FSW in RV32)
-            ((i & 0x1000) << 13)      // imm[5]
+            (((i & 0x1000) << 13)      // imm[5]
             | ((i & 0xc00))           // imm[4:3]
             | ((i & 0x380) << 8)      // rs1[2:0]
             | ((i & 0x60) << 21)      // imm[7:6]
             | ((i & 0x1c) << 18)      // rs2[2:0]
-            | 0b_01000_01000_011_00000_0100011,
+            | 0b_01000_01000_011_00000_0100011) as u64,
         ))),
         _ => Err(DecodingError::Unimplemented),
     }
