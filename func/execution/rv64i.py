@@ -1,4 +1,6 @@
 import numpy as np
+from config.data_types import *
+
 import warnings
 
 reg_type = np.uint64
@@ -355,59 +357,59 @@ def CSRRCI(data):
 
 
 def ADDIW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] + data["imm"][0])
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] + data["imm"][0]))
     return data
 
 def SLLIW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] << data["imm"][0])
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] << data["imm"][0]))
     return data
 
 def SRLIW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] >> data["imm"][0])
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] >> data["imm"][0]))
     return data
 
 def SRAIW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] >> data["imm"][0])
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] >> data["imm"][0]))
     return data
 
 def ADDW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] + data["read_regs"]["int"][1]["value"])
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] + data["read_regs"]["int"][1]["value"]))
     return data
 
 def SUBW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] - data["read_regs"]["int"][1]["value"])
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] - data["read_regs"]["int"][1]["value"]))
     return data
 
 def SLLW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] << data["read_regs"]["int"][1]["value"])
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] << data["read_regs"]["int"][1]["value"]))
     return data
 
 def SRLW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] >> data["read_regs"]["int"][1]["value"])
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] >> data["read_regs"]["int"][1]["value"]))
     return data
 
 def SRAW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] ^ data["read_regs"]["int"][1]["value"])
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] ^ data["read_regs"]["int"][1]["value"]))
     return data
 
 def MULW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] * data["read_regs"]["int"][1]["value"])
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] * data["read_regs"]["int"][1]["value"]))
     return data
 
 def DIVW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type( data["read_regs"]["int"][0]["value"] / data["read_regs"]["int"][1]["value"])
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] / data["read_regs"]["int"][1]["value"]))
     return data
 
 def DIVUW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type( data["read_regs"]["int"][0]["value"] / data["read_regs"]["int"][1]["value"])
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] / data["read_regs"]["int"][1]["value"]))
     return data
 
 def REMW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type( data["read_regs"]["int"][0]["value"] % data["read_regs"]["int"][1]["value"])
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] % data["read_regs"]["int"][1]["value"]))
     return data
 
 def REMUW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type( data["read_regs"]["int"][0]["value"] % data["read_regs"]["int"][1]["value"])
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] % data["read_regs"]["int"][1]["value"]))
     return data
 
 # =============================================================
