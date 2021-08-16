@@ -5,7 +5,7 @@ reg_type = np.uint64
 
 
 def LUI(data):
-    data["write_regs"]["int"][0]["value"] = data["imm"][0] << reg_type(12)
+    data["write_regs"]["int"][0]["value"] = data["imm"][0]
     return data
 
 def AUIPC(data):
