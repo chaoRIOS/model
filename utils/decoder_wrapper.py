@@ -53,7 +53,7 @@ def decode(word):
         data = {k: v for k,v in data.items() if v is not None}
 
         if 'imm' in data:
-            data['imm'] = [np.uint64(i) for i in data['imm']]
+            data['imm'] = [np.int64(i) for i in data['imm']]
 
         # Reorganize registers data format
         if 'read_regs' in data:

@@ -3,65 +3,64 @@ from config.data_types import *
 
 import warnings
 
-reg_type = np.uint64
-
 
 def LUI(data):
-    data["write_regs"]["int"][0]["value"] = data["imm"][0]
+    data["write_regs"]["int"][0]["value"] = reg_type(data["imm"][0])
     return data
 
 def AUIPC(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["pc"] + data["imm"][0])
+    data["write_regs"]["int"][0]["value"] = reg_type(data["pc"] + reg_type(data["imm"][0]))
     return data
 
 def JAL(data):
-    data["next_pc"] = reg_type(data["pc"]+ data["imm"][0])
+    data["next_pc"] = reg_type(data["pc"]+ reg_type(data["imm"][0]))
     data["write_regs"]["int"][0]["value"] = reg_type(data["pc"]+data["insn_len"])
     return data
 
 def JALR(data):
-    data["next_pc"] = reg_type( (data["read_regs"]["int"][0]["value"] + data["imm"][0]) >> 1 << 1)
+    data["next_pc"] = reg_type((data["read_regs"]["int"][0]["value"] + reg_type(data["imm"][0])) >> 1 << 1)
     data["write_regs"]["int"][0]["value"] = reg_type(data["pc"]+data["insn_len"])    
     return data
 
 def BEQ(data):
     if data["read_regs"]["int"][0]["value"] == data["read_regs"]["int"][1]["value"]:
-        data["next_pc"] = reg_type(data["pc"] + data["imm"][0])
+        data["next_pc"] = reg_type(data["pc"] + reg_type(data["imm"][0]))
     else:
         data["next_pc"] = reg_type(data["pc"] + data["insn_len"])
     return data
 
+# TODO: fix binary complement
 def BNE(data):
     if data["read_regs"]["int"][0]["value"] != data["read_regs"]["int"][1]["value"]:
-        data["next_pc"] = reg_type(data["pc"] + data["imm"][0])
+        data["next_pc"] = reg_type(data["pc"] + reg_type(data["imm"][0]))
     else:
         data["next_pc"] = reg_type(data["pc"] + data["insn_len"])
     return data
 
 def BLT(data):
     if data["read_regs"]["int"][0]["value"] < data["read_regs"]["int"][1]["value"]:
-        data["next_pc"] = reg_type(data["pc"] + data["imm"][0])
+        data["next_pc"] = reg_type(data["pc"] + reg_type(data["imm"][0]))
     else:
         data["next_pc"] = reg_type(data["pc"] + data["insn_len"])
     return data
 
 def BGE(data):
     if data["read_regs"]["int"][0]["value"] >= data["read_regs"]["int"][1]["value"]:
-        data["next_pc"] = reg_type(data["pc"] + data["imm"][0])
+        data["next_pc"] = reg_type(data["pc"] + reg_type(data["imm"][0]))
     else:
         data["next_pc"] = reg_type(data["pc"] + data["insn_len"])
     return data
 
 def BLTU(data):
     if data["read_regs"]["int"][0]["value"] < data["read_regs"]["int"][1]["value"]:
-        data["next_pc"] = reg_type(data["pc"] + data["imm"][0])
+        data["next_pc"] = reg_type(data["pc"] + reg_type(data["imm"][0]))
     else:
         data["next_pc"] = reg_type(data["pc"] + data["insn_len"])
     return data
 
 def BGEU(data):
     if data["read_regs"]["int"][0]["value"] >= data["read_regs"]["int"][1]["value"]:
-        data["next_pc"] = reg_type(data["pc"] + data["imm"][0])
+        data["next_pc"] = reg_type(data["pc"] + reg_type(data["imm"][0]))
     else:
         data["next_pc"] = reg_type(data["pc"] + data["insn_len"])
     return data
@@ -69,56 +68,57 @@ def BGEU(data):
 
 def LB(data):
     data["load_mem"]= [{
-        "addr": reg_type(data["read_regs"]["int"][0]["value"] + data["imm"][0]),
+        "addr": reg_type(data["read_regs"]["int"][0]["value"] + reg_type(data["imm"][0])),
         "len": 1
     }]
     return data
 
 def LH(data):    
     data["load_mem"]= [{
-        "addr": reg_type(data["read_regs"]["int"][0]["value"] + data["imm"][0]),
+        "addr": reg_type(data["read_regs"]["int"][0]["value"] + reg_type(data["imm"][0])),
         "len": 2
     }]
     return data
 
 def LW(data):
     data["load_mem"]= [{
-        "addr": reg_type(data["read_regs"]["int"][0]["value"] + data["imm"][0]),
+        "addr": reg_type(data["read_regs"]["int"][0]["value"] + reg_type(data["imm"][0])),
         "len": 4
     }]
     return data
 
+# TODO: add 0-ext
 def LBU(data):
     data["load_mem"]= [{
-        "addr": reg_type(data["read_regs"]["int"][0]["value"] + data["imm"][0]),
+        "addr": reg_type(data["read_regs"]["int"][0]["value"] + reg_type(data["imm"][0])),
         "len": 1
     }]
     return data
 
 def LHU(data):
     data["load_mem"]= [{
-        "addr": reg_type(data["read_regs"]["int"][0]["value"] + data["imm"][0]),
+        "addr": reg_type(data["read_regs"]["int"][0]["value"] + reg_type(data["imm"][0])),
         "len": 2
     }]
     return data
 
 def LWU(data):
     data["load_mem"]= [{
-        "addr": reg_type(data["read_regs"]["int"][0]["value"] + data["imm"][0]),
+        "addr": reg_type(data["read_regs"]["int"][0]["value"] + reg_type(data["imm"][0])),
         "len": 4
     }]
     return data
 
 def LD(data):
     data["load_mem"]= [{
-        "addr": reg_type(data["read_regs"]["int"][0]["value"] + data["imm"][0]),
+        "addr": reg_type(data["read_regs"]["int"][0]["value"] + reg_type(data["imm"][0])),
         "len": 8
     }]
     return data
 
 def SB(data):
     data["store_mem"]= [{
-        "addr": reg_type(data["read_regs"]["int"][0]["value"] + data["imm"][0]),
+        "addr": reg_type(data["read_regs"]["int"][0]["value"] + reg_type(data["imm"][0])),
         "len": 1,
         "value": data["read_regs"]["int"][1]["value"]
     }]
@@ -126,7 +126,7 @@ def SB(data):
 
 def SH(data):
     data["store_mem"]= [{
-        "addr": reg_type(data["read_regs"]["int"][0]["value"] + data["imm"][0]),
+        "addr": reg_type(data["read_regs"]["int"][0]["value"] + reg_type(data["imm"][0])),
         "len": 2,
         "value": data["read_regs"]["int"][1]["value"]
     }]
@@ -134,7 +134,7 @@ def SH(data):
 
 def SW(data):
     data["store_mem"][0]= [{
-        "addr": reg_type(data["read_regs"]["int"][0]["value"] + data["imm"][0]),
+        "addr": reg_type(data["read_regs"]["int"][0]["value"] + reg_type(data["imm"][0])),
         "len": 4,
         "value": data["read_regs"]["int"][1]["value"]
     }]
@@ -142,14 +142,14 @@ def SW(data):
 
 def SD(data):
     data["store_mem"][0]= [{
-        "addr": reg_type(data["read_regs"]["int"][0]["value"] + data["imm"][0]),
+        "addr": reg_type(data["read_regs"]["int"][0]["value"] + reg_type(data["imm"][0])),
         "len": 8,
         "value": data["read_regs"]["int"][1]["value"]
     }]
     return data
 
 def ADDI(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] + data["imm"][0])
+    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] + reg_type(data["imm"][0]))
     return data
 
 def SLTI(data):
@@ -157,31 +157,31 @@ def SLTI(data):
     return data
 
 def SLTIU(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(1 if data["read_regs"]["int"][0]["value"] < data["imm"][0] else 0)
+    data["write_regs"]["int"][0]["value"] = reg_type(1 if data["read_regs"]["int"][0]["value"] < reg_type(data["imm"][0]) else 0)
     return data
 
 def XORI(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] ^ data["imm"][0])
+    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] ^ reg_type(data["imm"][0]))
     return data
 
 def ORI(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] | data["imm"][0])
+    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] | reg_type(data["imm"][0]))
     return data
 
 def ANDI(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] & data["imm"][0])
+    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] & reg_type(data["imm"][0]))
     return data
 
 def SLLI(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] << data["imm"][0])
+    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] << reg_type(data["imm"][0]))
     return data
 
 # todo: comliment highest bit
 def SRLI(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] >> data["imm"][0])
+    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] >> reg_type(data["imm"][0]))
 
 def SRAI(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] >> data["imm"][0])
+    data["write_regs"]["int"][0]["value"] = reg_type(data["read_regs"]["int"][0]["value"] >> reg_type(data["imm"][0]))
     return data
 
 def ADD(data):
@@ -338,38 +338,38 @@ def CSRRWI(data):
     # rd = csr
     data["write_regs"]["int"][0]["value"] = data["read_regs"]["csr"][0]["value"]
     # csr = imm
-    data["write_regs"]["csr"][0]["value"] = data["imm"][0]
+    data["write_regs"]["csr"][0]["value"] = reg_type(data["imm"][0])
     return data
 
 def CSRRSI(data):
     # rd = csr
     data["write_regs"]["int"][0]["value"] = data["read_regs"]["csr"][0]["value"]
     # csr = (imm | csr)
-    data["write_regs"]["csr"][0]["value"] = data["read_regs"]["csr"][0]["value"] | data["imm"][0]
+    data["write_regs"]["csr"][0]["value"] = data["read_regs"]["csr"][0]["value"] | reg_type(data["imm"][0])
     return data
 
 def CSRRCI(data):
     # rd = csr
     data["write_regs"]["int"][0]["value"] = data["read_regs"]["csr"][0]["value"]
     # csr = (imm & csr)
-    data["write_regs"][0]["value"] = data["imm"][0] & data["read_regs"]["csr"][0]["value"]
+    data["write_regs"][0]["value"] = reg_type(data["imm"][0]) & data["read_regs"]["csr"][0]["value"]
     return data
 
 
 def ADDIW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] + data["imm"][0]))
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] + reg_type(data["imm"][0])))
     return data
 
 def SLLIW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] << data["imm"][0]))
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] << reg_type(data["imm"][0])))
     return data
 
 def SRLIW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] >> data["imm"][0]))
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] >> reg_type(data["imm"][0])))
     return data
 
 def SRAIW(data):
-    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] >> data["imm"][0]))
+    data["write_regs"]["int"][0]["value"] = reg_type(sext_word_type(data["read_regs"]["int"][0]["value"] >> reg_type(data["imm"][0])))
     return data
 
 def ADDW(data):

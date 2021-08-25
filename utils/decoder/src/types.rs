@@ -32,8 +32,9 @@ impl CsrIType {
     pub fn csr(&self) -> u64 {
         self.0 >> 20
     }
-    pub fn zimm(&self) -> u64 {
-        (self.0 >> 15) & 0x1f
+    pub fn zimm(&self) -> i64 {
+        // default 0-extended
+        ((self.0 >> 15) & 0x1f) as i64
     }
     pub fn rd(&self) -> u64 {
         (self.0 >> 7) & 0x1f
@@ -43,12 +44,12 @@ impl CsrIType {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct IType(pub u64);
 impl IType {
-    pub fn imm(&self) -> u64 {
-        ((self.0 >> 20) & 0x0000_07ff)
+    pub fn imm(&self) -> i64 {
+        (((self.0 >> 20) & 0x0000_07ff)
             | match self.0 & 0x8000_0000 {
                 0x8000_0000 => 0xffff_ffff_ffff_f800u64,
                 _ => 0,
-            } as u64
+            } as u64) as i64
     }
     pub fn rs1(&self) -> u64 {
         (self.0 >> 15) & 0x1f
@@ -61,13 +62,13 @@ impl IType {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct SType(pub u64);
 impl SType {
-    pub fn imm(&self) -> u64 {
-        ((self.0 >> 20) & 0xfe0)
+    pub fn imm(&self) -> i64 {
+        (((self.0 >> 20) & 0xfe0)
             | ((self.0 >> 7) & 0x1f)
             | match self.0 & 0x8000_0000 {
                 0x8000_0000 => 0xffff_ffff_ffff_f000u64,
                 _ => 0,
-            } as u64
+            } as u64) as i64
     }
     pub fn rs1(&self) -> u64 {
         (self.0 >> 15) & 0x1f
@@ -80,14 +81,14 @@ impl SType {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct BType(pub u64);
 impl BType {
-    pub fn imm(&self) -> u64 {
-        ((self.0 << 4) & 0x0000_0800)
+    pub fn imm(&self) -> i64 {
+        (((self.0 << 4) & 0x0000_0800)
             | ((self.0 >> 20) & 0x0000_07e0)
             | ((self.0 >> 7) & 0x0000_001e)
             | match self.0 & 0x8000_0000 {
                 0x8000_0000 => 0xffff_ffff_ffff_f000u64,
                 _ => 0,
-            } as u64
+            } as u64) as i64
     }
     pub fn rs1(&self) -> u64 {
         (self.0 >> 15) & 0x1f
@@ -100,13 +101,13 @@ impl BType {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct UType(pub u64);
 impl UType {
-    pub fn imm(&self) -> u64 {
-        ((self.0 as u64) & 0xffff_f000
+    pub fn imm(&self) -> i64 {
+        (((self.0 as u64) & 0xffff_f000
             // For furthur 64-bit address
             | match self.0 & 0x8000_0000 {
                 0x8000_0000 => 0xffff_ffff_0000_0000u64,
                 _ => 0,
-            }) as u64
+            }) as u64) as i64
     }
     pub fn rd(&self) -> u64 {
         (self.0 >> 7) & 0x1f
@@ -116,14 +117,14 @@ impl UType {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct JType(pub u64);
 impl JType {
-    pub fn imm(&self) -> u64 {
-        ((self.0 & 0x7fe0_0000) >> 20)
+    pub fn imm(&self) -> i64 {
+        (((self.0 & 0x7fe0_0000) >> 20)
             | ((self.0 & 0x0010_0000) >> 9)
             | (self.0 & 0x000f_f000)
             | match self.0 & 0x8000_0000 {
                 0x8000_0000 => 0xffff_ffff_fff0_0000u64,
                 _ => 0,
-            } as u64
+            } as u64) as i64
     }
     pub fn rd(&self) -> u64 {
         (self.0 >> 7) & 0x1f
@@ -292,7 +293,7 @@ mod tests {
         assert_eq!(IType(0x0006c703).imm(), 0); // Lbu x14,0(x13)
         assert_eq!(IType(0x0007c683).imm(), 0); // Lbu x13,0(x15)
         assert_eq!(IType(0x0060df03).imm(), 6); // Lhu x30,6(x1)
-        assert_eq!(IType(0xffe0df03).imm(), (-2i64) as u32 as u64); // Lhu x30,-2(x1)
+        assert_eq!(IType(0xffe0df03).imm(), -2i64); // Lhu x30,-2(x1)
         assert_eq!(IType(0x0002d303).imm(), 0); // Lhu x6,0(x5)
         assert_eq!(IType(0x00346303).imm(), 3); // Lwu x6,3(x8)
         assert_eq!(IType(0x0080ef03).imm(), 8); // Lwu x30,8(x1)
@@ -300,7 +301,7 @@ mod tests {
         assert_eq!(IType(0x01853683).imm(), 24); // Ld x13,24(x10)
         assert_eq!(IType(0x02013c03).imm(), 32); // Ld x24,32(x2)
         assert_eq!(IType(0x0007b703).imm(), 0); // Ld x14,0(x15)
-        assert_eq!(IType(0xbff00513).imm(), -1025i64 as u32 as u64); // li a0,-1025
+        assert_eq!(IType(0xbff00513).imm(), -1025i64); // li a0,-1025
     }
 
     #[test]
@@ -311,10 +312,7 @@ mod tests {
         assert_eq!(BType(0x06f58063).imm(), 0x80002648 - 0x800025e8); // beq x11,x15,80002648
         assert_eq!(BType(0x00050a63).imm(), 0x800024e8 - 0x800024d4); // beq x10,x0,800024e8
         assert_eq!(BType(0x03ff0663).imm(), 0x80000040 - 0x80000014); // beq x30,x31,80000040
-        assert_eq!(
-            BType(0xfe069ae3).imm(),
-            (0x800026f0i64 - 0x800026fci64) as u32 as u64
-        ); // bne x13,x0,800026f0
+        assert_eq!(BType(0xfe069ae3).imm(), (0x800026f0i64 - 0x800026fci64)); // bne x13,x0,800026f0
         assert_eq!(BType(0x00f5f463).imm(), 0x80002290 - 0x80002288); // bgeu x11,x15,80002290
         assert_eq!(BType(0x1e301c63).imm(), 0x800003c4 - 0x800001cc); // bne x0,x3,800003c4
         assert_eq!(BType(0x13df1063).imm(), 0x800030dc - 0x80002fbc); // bne x30,x29,800030dc
@@ -341,26 +339,14 @@ mod tests {
     #[test]
     #[allow(overflowing_literals)]
     fn jtype() {
-        assert_eq!(
-            JType(0xfe1ff06f).imm(),
-            (0x800029eci64 - 0x80002a0ci64) as u32 as u64
-        ); // jal x0,800029ec
+        assert_eq!(JType(0xfe1ff06f).imm(), (0x800029eci64 - 0x80002a0ci64)); // jal x0,800029ec
         assert_eq!(JType(0x0000006f).imm(), 0x80002258 - 0x80002258); // jal x0,80002258
-        assert_eq!(
-            JType(0xf89ff06f).imm(),
-            (0x800027aci64 - 0x80002824i64) as u32 as u64
-        ); // jal x0,800027ac
+        assert_eq!(JType(0xf89ff06f).imm(), (0x800027aci64 - 0x80002824i64)); // jal x0,800027ac
         assert_eq!(JType(0x0240006f).imm(), 0x8000215c - 0x80002138); // jal x0,8000215c
-        assert_eq!(
-            JType(0xd89ff0ef).imm(),
-            (0x80002230i64 - 0x800024a8i64) as u32 as u64
-        ); // jal x1,80002230
+        assert_eq!(JType(0xd89ff0ef).imm(), (0x80002230i64 - 0x800024a8i64)); // jal x1,80002230
         assert_eq!(JType(0x008007ef).imm(), 0x8000265c - 0x80002654); // jal x15,8000265c
         assert_eq!(JType(0x0240006f).imm(), 0x80002154 - 0x80002130); // jal x0,80002154
-        assert_eq!(
-            JType(0xf71ff06f).imm(),
-            (0x80002750i64 - 0x800027e0i64) as u32 as u64
-        ); // jal x0,80002750
+        assert_eq!(JType(0xf71ff06f).imm(), (0x80002750i64 - 0x800027e0i64)); // jal x0,80002750
         assert_eq!(JType(0x00c0006f).imm(), 0x8000000c - 0x80000000); // jal x0,8000000c
 
         assert_eq!(JType(0xfe1ff06f).rd(), 0); // jal x0,800029ec
