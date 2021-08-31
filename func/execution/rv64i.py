@@ -38,14 +38,20 @@ def BNE(data):
     return data
 
 def BLT(data):
-    if data["read_regs"]["int"][0]["value"] < data["read_regs"]["int"][1]["value"]:
+    # binary complement
+    lhs = (np.invert(data["read_regs"]["int"][0]["value"]) + 1) if data["read_regs"]["int"][0]["value"] & reg_type(0x8000_0000_0000_0000) == 0x8000_0000_0000_0000 else data["read_regs"]["int"][0]["value"]
+    rhs = (np.invert(data["read_regs"]["int"][1]["value"]) + 1) if data["read_regs"]["int"][1]["value"] & reg_type(0x8000_0000_0000_0000) == 0x8000_0000_0000_0000 else data["read_regs"]["int"][1]["value"]
+    if lhs < rhs:
         data["next_pc"] = reg_type(data["pc"] + reg_type(data["imm"][0]))
     else:
         data["next_pc"] = reg_type(data["pc"] + data["insn_len"])
     return data
 
 def BGE(data):
-    if data["read_regs"]["int"][0]["value"] >= data["read_regs"]["int"][1]["value"]:
+    # binary complement
+    lhs = (np.invert(data["read_regs"]["int"][0]["value"]) + 1) if data["read_regs"]["int"][0]["value"] & reg_type(0x8000_0000_0000_0000) == 0x8000_0000_0000_0000 else data["read_regs"]["int"][0]["value"]
+    rhs = (np.invert(data["read_regs"]["int"][1]["value"]) + 1) if data["read_regs"]["int"][1]["value"] & reg_type(0x8000_0000_0000_0000) == 0x8000_0000_0000_0000 else data["read_regs"]["int"][1]["value"]
+    if lhs >= rhs:
         data["next_pc"] = reg_type(data["pc"] + reg_type(data["imm"][0]))
     else:
         data["next_pc"] = reg_type(data["pc"] + data["insn_len"])
@@ -133,7 +139,7 @@ def SH(data):
     return data
 
 def SW(data):
-    data["store_mem"][0]= [{
+    data["store_mem"]= [{
         "addr": reg_type(data["read_regs"]["int"][0]["value"] + reg_type(data["imm"][0])),
         "len": 4,
         "value": data["read_regs"]["int"][1]["value"]
@@ -141,7 +147,7 @@ def SW(data):
     return data
 
 def SD(data):
-    data["store_mem"][0]= [{
+    data["store_mem"]= [{
         "addr": reg_type(data["read_regs"]["int"][0]["value"] + reg_type(data["imm"][0])),
         "len": 8,
         "value": data["read_regs"]["int"][1]["value"]
