@@ -79,8 +79,9 @@ class Simulator:
         # self.function_units.tick_in(decode_result_with_register)
         # print("decode_result_with_register", decode_result_with_register)
 
-        load_store_result = self.load_store_unit.tick(execute_result)
-        print("load_store_result", load_store_result)
+        # Single issue 0-timing LSU
+        load_store_result = self.load_store_unit.tick(execute_result).step()
+        # print("load_store_result", load_store_result)
 
         # 2) write back to register file
         self.reg.tick(load_store_result).step()
@@ -94,6 +95,7 @@ class Simulator:
         if decode_result is not None:
             if decode_result["name"] == "ECALL":
                 if self.reg.read_register("int", 10) == 0:
+                    print("Test Passed:{}".format(test))
                     self.exit = True
                 else:
                     raise UserWarning(
@@ -201,9 +203,7 @@ class EX(Module):
 
 
     def op(self, data):
-        print(data)
         data = self.reg.tick(data).step()
-        print(data)
 
         return getattr(instructions, data["name"])(data)
 
@@ -212,6 +212,19 @@ class LSU(Module):
     def __init__(self, memory) -> None:
         super().__init__()
         self.memory = memory
+
+    def tick(self, data):
+        self.input_port = data
+        return self
+    
+    def step(self):
+        if self.input_port is not None:
+            self.output_port = self.op(self.input_port)
+            self.input_port = None
+        else:
+            self.output_port = None
+
+        return self.output_port
 
     # Handle results from EX stage
     def op(self, data):
