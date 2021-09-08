@@ -48,6 +48,10 @@ class Module(ModuleBase):
     def flush(self):
         self.input_port = None
         self.output_port = None
+        for port_type in self.ports:
+            for port in self.ports[port_type]:
+                self.ports[port_type][port].data = None
+                self.ports[port_type][port].update_status()
 
 
 class Port:

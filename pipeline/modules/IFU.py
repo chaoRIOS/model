@@ -38,3 +38,9 @@ class IFU(Module):
             "pc": self.pc,
             "word": word_type(self.memory.read_bytes(self.fetch_pc, 4)),
         }
+
+    def flush(self):
+        # Hold input port
+
+        self.ports["output"]["ID"].data = None
+        self.ports["output"]["ID"].update_status()

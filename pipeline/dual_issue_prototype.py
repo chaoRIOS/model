@@ -45,8 +45,8 @@ class Simulator:
         self.EX = EX.EX()
         self.load_store_unit = LSU.LSU(self.memory)
 
-        self.commit_result = None
-        self.complete_result = None
+        self.flush_signal = False
+
         self.exit = False
 
     def print(self, name, data):
@@ -67,14 +67,6 @@ class Simulator:
     def tick(self):
         # debug logging
         print("-" * 10, "tick @ cycle:", self.cycle, "-" * 10)
-
-        if self.commit_result is not None:
-            # Flush
-            if "next_pc" in self.commit_result.keys():
-                self.IF.flush()
-                self.ID.flush()
-                self.EX.flush()
-                self.load_store_unit.flush()
         
         if self.IF.ports['output']['ID'].valid:
             self.ID.ports['input']['IF'].data = self.IF.ports['output']['ID'].data
@@ -111,7 +103,8 @@ class Simulator:
             self.ROB.ports["output"]["IF"].data = None
             self.ROB.ports["output"]["IF"].update_status()
 
-        self.print("commit_result", self.commit_result)
+            self.flush_signal = True
+
         # # 2) write back to register file
         # self.reg.tick(load_store_result).step()
 
@@ -132,7 +125,7 @@ class Simulator:
         #                 )
 
         # debug logging
-        # self.reg.print_registers()
+        self.reg.print_registers()
 
     # Updata internal status
     def step(self):
@@ -149,6 +142,17 @@ class Simulator:
 
         # 2) Implictly access memory
         self.load_store_unit.step()
+    
+    def flush(self):
+        print("-" * 10, " flush @ cycle:", self.cycle, "-" * 10)
+
+        self.flush_signal = False
+        # Flush
+        self.IF.flush()
+        self.ID.flush()
+        self.ROB.flush()
+        self.EX.flush()
+        self.load_store_unit.flush()
 
 
 for test in rv64ui_p_tests:
@@ -156,9 +160,11 @@ for test in rv64ui_p_tests:
 
     while cpu.exit is not True:
         cpu.tick()
+        if cpu.flush_signal is True:
+            cpu.flush()
         cpu.step()
         cpu.cycle += 1
 
-        if cpu.cycle > 6:
+        if cpu.cycle > 10:
             cpu.exit = True
     break

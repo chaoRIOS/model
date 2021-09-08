@@ -283,6 +283,7 @@ class reorder_buffer(Module):
                     self.physical_register_file.deallocate_register(entry.LPRd)
 
                     entry.invalid()
+                    self.free_entry_index.append(self.busy_entry_index.popleft())
 
                     # Branch controlling logic
                     # TODO: Exception handling
@@ -308,6 +309,21 @@ class reorder_buffer(Module):
                             # Flush ROB & reg_file
                             # TODO: revert / snapshot
                             # TODO: Add branch prediction
+
+                            # Roll_back
+                            for i in range(len(self.busy_entry_index)):
+                                entry_index = self.busy_entry_index.pop()
+                                self.entries[entry_index].invalid()
+                                self.free_entry_index.insert(0, entry_index)
+                                if self.entries[entry_index].Rd is not None:
+                                    self.physical_register_file.set_physical_index(
+                                        self.entries[entry_index].Rd,
+                                        self.entries[entry_index].LPRd,
+                                    )
+                                    self.physical_register_file.rollback_register(
+                                        self.entries[entry_index].PRd
+                                    )
+
                             break
                 else:
                     break
