@@ -3,6 +3,7 @@
 import sys
 import os
 import numpy as np
+from numpy.lib.arraysetops import isin
 
 sys.path.append("..")
 
@@ -35,84 +36,116 @@ class Simulator:
         # self.tohost_addr = data.tohost_addr
         self.cycle = 0
 
-        self.reg = REG.ArchitecturalRegisterFile()
+        self.reg = REG.PhysicalRegisterFile(100)
         self.memory = MEM.Memory(data.memory.data)
 
-        self.fetch_unit = IFU.IFU(self.memory, reg_type(data.entry_pc))
-        self.decoder = IDU.IDU()
-        self.function_units = EX.EX(self.reg)
+        self.IF = IFU.IFU(self.memory, reg_type(data.entry_pc))
+        self.ID = IDU.IDU()
+        self.ROB = ROB.reorder_buffer(32, self.reg, 2)
+        self.EX = EX.EX()
         self.load_store_unit = LSU.LSU(self.memory)
 
-        self.last_execute_result = None
+        self.commit_result = None
+        self.complete_result = None
         self.exit = False
+
+    def print(self, name, data):
+        if data is None:
+            print("{}: {}".format(name, "None"))
+            return
+        print(name)
+        for item in data:
+            print("  [")
+            for k, v in item.items():
+                if isinstance(v, word_type) or isinstance(v, double_type):
+                    print("    {}: {:08x}".format(k, v))
+                else:
+                    print("    {}: {}".format(k, str(v)))
+            print("  ]")
 
     # Transport data
     def tick(self):
         # debug logging
-        print("cycle =", self.cycle, "pc =", hex(self.fetch_unit.pc))
+        print("-" * 10, "tick @ cycle:", self.cycle, "-" * 10)
 
-        print("self.last_execute_result", self.last_execute_result)
-
-        if self.last_execute_result is not None:
+        if self.commit_result is not None:
             # Flush
-            if "next_pc" in self.last_execute_result.keys():
-                self.fetch_unit.flush()
-                self.decoder.flush()
-                self.function_units.flush()
+            if "next_pc" in self.commit_result.keys():
+                self.IF.flush()
+                self.ID.flush()
+                self.EX.flush()
                 self.load_store_unit.flush()
+        
+        if self.IF.ports['output']['ID'].valid:
+            self.ID.ports['input']['IF'].data = self.IF.ports['output']['ID'].data
+            self.ID.ports['input']['IF'].update_status()
+            self.IF.ports['output']['ID'].data = None
+            self.IF.ports['output']['ID'].update_status()
 
-        fetch_result = self.fetch_unit.tick(self.last_execute_result)
-        print("fetch_result", fetch_result)
+        if self.ID.ports['output']['ROB'].valid:
+            self.ROB.ports["input"]["ID"].data = self.ID.ports['output']['ROB'].data
+            self.ROB.ports["input"]["ID"].update_status()
+            self.ID.ports['output']['ROB'].data = None
+            self.ID.ports['output']['ROB'].update_status()
 
-        decode_result = self.decoder.tick(fetch_result)
-        print("decode_result", decode_result)
+        if self.ROB.ports["output"]["EX"].valid:
+            # input data from ROB: enters backend at T cycle
+            # complete_result: enters before T-1 cycle
+            self.EX.ports['input']['ROB'].data = self.ROB.ports["output"]["EX"].data
+            self.EX.ports['input']['ROB'].update_status()
+            self.ROB.ports["output"]["EX"].data = None
+            self.ROB.ports["output"]["EX"].update_status()
 
-        execute_result = self.function_units.tick(decode_result)
-        self.last_execute_result = execute_result
-        print("execute_result", execute_result)
+        if self.EX.ports['output']['ROB'].valid:
+            # Single issue 0-timing LSU
+            self.ROB.ports["input"]["EX"].data = self.load_store_unit.tick(
+                self.EX.ports['output']['ROB'].data
+            ).step()
+            self.ROB.ports["input"]["EX"].update_status()
+            self.EX.ports['output']['ROB'].data = None
+            self.EX.ports['output']['ROB'].update_status()
 
-        # # 1) read register file
-        # decode_result_with_register = self.reg.tick(decode_result).step()
-        # self.function_units.tick_in(decode_result_with_register)
-        # print("decode_result_with_register", decode_result_with_register)
+        if self.ROB.ports["output"]["IF"].valid:
+            self.IF.ports['input']['ROB'].data = self.ROB.ports["output"]["IF"].data
+            self.IF.ports['input']['ROB'].update_status()
+            self.ROB.ports["output"]["IF"].data = None
+            self.ROB.ports["output"]["IF"].update_status()
 
-        # Single issue 0-timing LSU
-        load_store_result = self.load_store_unit.tick(execute_result).step()
-        # print("load_store_result", load_store_result)
+        self.print("commit_result", self.commit_result)
+        # # 2) write back to register file
+        # self.reg.tick(load_store_result).step()
 
-        # 2) write back to register file
-        self.reg.tick(load_store_result).step()
-
-        self.cycle += 1
-
-        if self.cycle > 1000:
-            self.exit = True
-
-        # TODO: for riscv-test isa test only
-        if decode_result is not None:
-            if decode_result["name"] == "ECALL":
-                if self.reg.read_register("int", 10) == 0:
-                    print("Test Passed:{}".format(test))
-                    self.exit = True
-                else:
-                    raise UserWarning(
-                        "\nTest failed:{} at pc:{}".format(
-                            test, hex(self.fetch_unit.pc)
-                        )
-                    )
+        # # TODO: for riscv-test isa test only
+        # if decode_result is not None:
+        #     for data in decode_result:
+        #         if data["name"] == "ECALL":
+        #             if self.reg.read_register("int", 10) == 0:
+        #                 print("Test Passed:{}".format(test))
+        #                 self.exit = True
+        #             elif self.reg.read_register("int", 10) is None:
+        #                 pass
+        #             else:
+        #                 raise UserWarning(
+        #                     "\nTest failed:{} at pc:{}".format(
+        #                         test, hex(self.IF.pc)
+        #                     )
+        #                 )
 
         # debug logging
-        self.reg.print_registers()
+        # self.reg.print_registers()
 
     # Updata internal status
     def step(self):
+        print("-" * 10, " step @ cycle:", self.cycle, "-" * 10)
 
         # 1) Implictly access memory
-        self.fetch_unit.step()
+        self.IF.step()
 
-        self.decoder.step()
+        self.ID.step()
 
-        self.function_units.step()
+        self.ROB.step()
+
+        self.EX.step()
 
         # 2) Implictly access memory
         self.load_store_unit.step()
@@ -124,4 +157,8 @@ for test in rv64ui_p_tests:
     while cpu.exit is not True:
         cpu.tick()
         cpu.step()
+        cpu.cycle += 1
+
+        if cpu.cycle > 6:
+            cpu.exit = True
     break

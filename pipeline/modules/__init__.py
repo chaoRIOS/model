@@ -5,12 +5,4 @@ import sys
 sys.path.append("..")
 sys.path.append("../..")
 
-__all__ = [
-    'EX',
-    'IDU',
-    'IFU',
-    'LSU',
-    'MEM',
-    'REG',
-    'ROB'
-]
+__all__ = ["EX", "IDU", "IFU", "LSU", "MEM", "REG", "ROB"]

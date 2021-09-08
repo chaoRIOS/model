@@ -5,6 +5,7 @@ from config.data_types import *
 from config.register_name import register_name
 from module_base import Module
 
+
 class LSU(Module):
     def __init__(self, memory) -> None:
         super().__init__()
@@ -24,19 +25,21 @@ class LSU(Module):
         return self.output_port
 
     # Handle results from EX stage
-    def op(self, data):
-        # load store
-        if "load_mem" in data:
-            for load_request in data["load_mem"]:
-                data["write_regs"]["int"][0]["value"] = self.memory.read_bytes(
-                    load_request["addr"], load_request["len"]
-                )
+    def op(self, port_data):
+        for data in port_data["results"]:
+            # load store
+            if "load_mem" in data:
+                for load_request in data["load_mem"]:
+                    data["write_regs"]["int"][0]["value"] = self.memory.read_bytes(
+                        load_request["addr"], load_request["len"]
+                    )
 
-        if "write_mem" in data:
-            for store_request in data["store_mem"]:
-                self.memory.write_bytes(
-                    store_request["addr"], store_request["len"], store_request["value"]
-                )
+            if "write_mem" in data:
+                for store_request in data["store_mem"]:
+                    self.memory.write_bytes(
+                        store_request["addr"],
+                        store_request["len"],
+                        store_request["value"],
+                    )
 
-        return data
-
+        return port_data

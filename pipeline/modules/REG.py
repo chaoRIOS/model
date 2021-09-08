@@ -22,10 +22,9 @@ class PhysicalRegisterFile(Module):
         self.p = [False] * size
         # freelist
         self.freelist = deque(range(size), size)
-    
+
         # CSR
         self.csr = np.zeros(4096, dtype=reg_type)
-
 
         # TODO Seems like Linux requirement
         # self.gpr[0xB] = 0x1020
@@ -39,30 +38,76 @@ class PhysicalRegisterFile(Module):
         # mhartid
         self.csr[0xF14] = 0x0
 
-    def has_free_register(self):
-        return len(self.freelist) < self.freelist.maxlen
+    def has_free_register(self, number=1):
+        return (len(self.freelist) + number) <= self.freelist.maxlen
 
     def rename(self):
         index = self.freelist.popleft()
         self.p[index] = False
         # Note: Need to update rename table outside
         return index
-    
+
+    def deallocate_register(self, index):
+        if index is None:
+            return
+
+        assert (
+            index not in self.freelist
+        ), "Deallocating register in freelist p[{}]".format(index)
+        assert self.p[index] is True, "Deallocating invalid register p[{}]".format(
+            index
+        )
+        self.p[index] = False
+        self.freelist.append(index)
+
     def get_physical_index(self, index):
         return self.rename_table[register_name[index]]
-    
+
     def set_physical_index(self, arch_index, phy_index):
         self.rename_table[register_name[arch_index]] = phy_index
 
     def read_physical_register(self, index):
-        return self.physical_register[index] if (self.p[index] is True) else None
-    
+        if index is None:
+            return None
+        return (
+            reg_type(self.physical_register[index]) if (self.p[index] is True) else None
+        )
+
     def write_physical_register(self, index, value):
         if self.p[index] is False:
             self.physical_register[index] = reg_type(value)
             self.p[index] = True
         else:
-            raise UserWarning("Try to overwrite valid register[{}] with value {}".format(index, hex(value)))
+            raise UserWarning(
+                "Try to overwrite valid register[{}] with value {}".format(
+                    index, hex(value)
+                )
+            )
+
+    def read_csr(self, index):
+        return self.csr[index]
+
+    def write_csr(self, index, value):
+        self.csr[index] = reg_type(value)
+
+    def read_register(self, register_type, arch_index):
+        return (
+            self.read_physical_register(self.get_physical_index(arch_index))
+            if register_type is "int"
+            else self.read_csr(arch_index)
+        )
+
+    def print_registers(self):
+        print("Renaming table")
+        for i in range(32):
+            print(
+                "{}\t{}".format(register_name[i], str(self.get_physical_index(i))),
+                end="\t",
+            )
+            if i % 4 == 3:
+                print("", end="\n")
+        print("Freelist capacity:", len(self.freelist))
+
 
 class ArchitecturalRegisterFile:
     def __init__(self) -> None:

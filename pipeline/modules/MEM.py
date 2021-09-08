@@ -5,6 +5,7 @@ from config.data_types import *
 from config.register_name import register_name
 from module_base import Module
 
+
 class Memory(Module):
     def __init__(self, mem) -> None:
         super().__init__()
