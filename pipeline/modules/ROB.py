@@ -18,6 +18,7 @@ class reorder_buffer(Module):
     class ROBEntry:
         def __init__(self) -> None:
             self.use = False
+            self.inflight = False
             self.ex = False
 
             self.opcode = None
@@ -47,6 +48,7 @@ class reorder_buffer(Module):
 
         def fill_with(self, data):
             self.use = True
+            self.inflight = False
             self.ex = False
             self.opcode = data["name"]
 
@@ -99,7 +101,20 @@ class reorder_buffer(Module):
 
         def invalid(self):
             self.use = False
+            self.inflight = False
             self.ex = False
+
+            self.opcode = None
+            self.PRS1 = None
+            self.PRS2 = None
+            self.p1 = False
+            self.p2 = False
+
+            self.Rd = None
+            self.PRd = None
+            self.LPRd = None
+
+            self.data = None
 
     # Member methods of class ROB
     def __init__(self, size, physical_register_file, issue_number) -> None:
@@ -115,7 +130,7 @@ class reorder_buffer(Module):
         }
 
         self.function_unit_status = {
-            "ALU": [0, 0],
+            "ALU": [{"latency": 0} for i in range(2)],
             # TODO
         }
 
@@ -156,24 +171,40 @@ class reorder_buffer(Module):
         self.ports[port_type][index].data = data
 
     # Function unit status methods
-    def function_unit_ready(self, opcode):
+    def function_unit_ready(self, opcode, latency=1):
         # TODO: add opcode >> FU_type mapping
         if opcode is not None:
             function_unit_type = "ALU"
-            if 0 in self.function_unit_status[function_unit_type]:
-                # Set a meaningless placeholder
-                self.function_unit_status[function_unit_type][
-                    self.function_unit_status[function_unit_type].index(0)
-                ] = -1
-                return True
-        return False
+            for function_unit_index, function_unit in enumerate(
+                self.function_unit_status[function_unit_type]
+            ):
+                if function_unit["latency"] == 0:
+                    # Meaning-less placeholder
+                    function_unit["latency"] = latency
+                    return function_unit_index, function_unit_type
+        return None, None
 
     # Processing internal ROB status
     def step(self):
 
-        # 1. Handle input data
+        print(self.busy_entry_index)
 
-        # Check port ID->ROB
+        self.write_back()
+
+        if self.commit() is True:
+            # Flush
+            return
+
+        self.allocate()
+
+        self.update_entry()
+
+        self.issue()
+
+        self.tick_function_unit_status()
+
+    def allocate(self):
+        # Handle port ID->ROB
         # self.ports["input"]["ID"].update_status()
         if self.ports["input"]["ID"].valid is True:
             processed_item = self.handle_ID_input(self.ports["input"]["ID"].data)
@@ -191,7 +222,8 @@ class reorder_buffer(Module):
 
             self.ports["input"]["ID"].update_status()
 
-        # Check port EX->ROB
+    def write_back(self):
+        # Handle port EX->ROB
         # self.ports["input"]["EX"].update_status()
         if self.ports["input"]["EX"].valid is True:
             # TODO: extend this interface for Trap handling
@@ -201,19 +233,20 @@ class reorder_buffer(Module):
 
             if is_branch:
                 # TODO: Branch / Trap
+                # Hold EX->[ROB].ready low
                 pass
             else:
-                pass
+                self.ports["input"]["EX"].data = None
 
-            self.ports["input"]["EX"].data = None
             self.ports["input"]["EX"].update_status()
 
-        # 2. Process internal data, aka. dispatching
-
-        # Update mapping in entries
+    def update_entry(self):
+        # Update register mapping
         for entry_index in self.busy_entry_index:
-            if (self.entries[entry_index].use is True) and (
-                self.entries[entry_index].ex is False
+            if (
+                (self.entries[entry_index].use is True)
+                and (self.entries[entry_index].ex is False)
+                and (self.entries[entry_index].inflight is False)
             ):
                 # If PRSx is None, then px is None instead of False
                 # So only existing PRSx enters either of following 2 branches
@@ -223,14 +256,36 @@ class reorder_buffer(Module):
                     self.entries[entry_index].p1 = self.physical_register_file.p[
                         self.entries[entry_index].PRS1
                     ]
+                    # Get register value if valid
+                    if self.entries[entry_index].p1 is True:
+                        self.entries[entry_index].data["read_regs"]["int"][0][
+                            "p"
+                        ] = True
+                        self.entries[entry_index].data["read_regs"]["int"][0][
+                            "value"
+                        ] = self.physical_register_file.read_physical_register(
+                            self.entries[entry_index].PRS1
+                        )
+
                 if (self.entries[entry_index].PRS2 is not None) and (
                     self.entries[entry_index].p2 is False
                 ):
                     self.entries[entry_index].p2 = self.physical_register_file.p[
                         self.entries[entry_index].PRS2
                     ]
+                    # Get register value if valid
+                    if self.entries[entry_index].p2 is True:
+                        self.entries[entry_index].data["read_regs"]["int"][1][
+                            "p"
+                        ] = True
+                        self.entries[entry_index].data["read_regs"]["int"][1][
+                            "value"
+                        ] = self.physical_register_file.read_physical_register(
+                            self.entries[entry_index].PRS2
+                        )
 
-        # Check port ROB->EX
+    def issue(self):
+        # Feed port ROB->EX
         # self.ports["output"]["EX"].update_status()
         if self.ports["output"]["EX"].ready is True:
             issue_number = 0
@@ -243,30 +298,61 @@ class reorder_buffer(Module):
                 if (
                     (self.entries[entry_index].ex is False)
                     and (self.entries[entry_index].is_ready())
-                    and (self.function_unit_ready(self.entries[entry_index].opcode))
+                    and (self.entries[entry_index].inflight is False)
                 ):
-                    if self.ports["output"]["EX"].data is None:
-                        self.ports["output"]["EX"].data = []
-
-                    # issue the entry
-                    self.ports["output"]["EX"].data.append(
-                        self.entries[entry_index].data
+                    # Try to allocate function unit
+                    function_unit_index, function_unit_type = self.function_unit_ready(
+                        self.entries[entry_index].opcode
                     )
-                    issue_number += 1
+                    if function_unit_index is not None:
+                        print(
+                            "issueing:[{}]".format(entry_index),
+                            self.entries[entry_index],
+                        )
+                        # Add FU info
+                        self.entries[entry_index].data[
+                            "function_unit_index"
+                        ] = function_unit_index
+                        self.entries[entry_index].data[
+                            "function_unit_type"
+                        ] = function_unit_type
 
+                        # Perpare output data
+                        if self.ports["output"]["EX"].data is None:
+                            self.ports["output"]["EX"].data = []
+
+                        # issue the entry
+                        self.ports["output"]["EX"].data.append(
+                            self.entries[entry_index].data
+                        )
+
+                        self.entries[entry_index].inflight = True
+
+                        issue_number += 1
+                else:
+                    print("Cant issue[{}] because".format(entry_index), end=" ")
+                    if not (self.entries[entry_index].ex is False):
+                        print("executed")
+                    elif not (self.entries[entry_index].is_ready()):
+                        print("register not ready")
+                    elif not (self.entries[entry_index].inflight is False):
+                        print("inflight")
+
+            print("issue_number", issue_number)
             if issue_number > 0:
                 self.ports["output"]["EX"].update_status()
 
-        # 3. Commit
-        # Check port ROB->IF
-        # self.ports["output"]["IF"].update_status()
+    def commit(self):
+        # Feed port ROB->IF
+        # Note: If a branch is committed with flush signal, directly
+        # return from this function
         if (self.ports["output"]["IF"].ready is True) and (
             len(self.busy_entry_index) > 0
         ):
             for i in range(self.issue_number):
                 entry = self.entries[self.busy_entry_index[0]]
                 if entry.is_complete():
-
+                    print("committing:[{}]".format(self.busy_entry_index[0]), entry)
                     data = entry.data
 
                     # Update CSR
@@ -287,7 +373,7 @@ class reorder_buffer(Module):
 
                     # Branch controlling logic
                     # TODO: Exception handling
-                    if entry.opcode in [
+                    if data["name"] in [
                         "BNE",
                         "BNE",
                         "BLT",
@@ -302,19 +388,20 @@ class reorder_buffer(Module):
                             pass
                         else:
                             # Taken
-                            # return to 'is_branch'
+                            # return to IFU
                             self.ports["output"]["IF"].data = data
                             self.ports["output"]["IF"].update_status()
 
                             # Flush ROB & reg_file
-                            # TODO: revert / snapshot
+                            # TODO: snapshot
                             # TODO: Add branch prediction
 
                             # Roll_back
                             for i in range(len(self.busy_entry_index)):
+
                                 entry_index = self.busy_entry_index.pop()
-                                self.entries[entry_index].invalid()
                                 self.free_entry_index.insert(0, entry_index)
+
                                 if self.entries[entry_index].Rd is not None:
                                     self.physical_register_file.set_physical_index(
                                         self.entries[entry_index].Rd,
@@ -324,10 +411,19 @@ class reorder_buffer(Module):
                                         self.entries[entry_index].PRd
                                     )
 
-                            break
+                                self.entries[entry_index].invalid()
+                            return True
                 else:
-                    break
-        return
+                    return False
+
+    def tick_function_unit_status(self):
+        # FU status of ROB should be 1 cycle ahead of that of EX
+        for function_unit_type in self.function_unit_status:
+            for function_unit_index, function_unit in enumerate(
+                self.function_unit_status[function_unit_type]
+            ):
+                # Decrement
+                function_unit["latency"] = max(function_unit["latency"] - 1, 0)
 
     def handle_ID_input(self, port_data):
         # instructions from ID stage
@@ -340,39 +436,6 @@ class reorder_buffer(Module):
                 if (("write_regs" in data) and ("int" in data["write_regs"]))
                 else 0
             ):
-                # rename
-                if "write_regs" in data:
-                    # CSR no renaming
-
-                    # GPR
-                    if "int" in data["write_regs"]:
-                        for reg_data in data["write_regs"]["int"]:
-                            # x0
-                            if reg_data["index"] == 0:
-                                reg_data["arch_index"] = 0
-                                reg_data["index"] = None
-                                reg_data["LPRd"] = None
-                            # Other architectural registers
-                            elif self.physical_register_file.has_free_register():
-                                # Get newly-renamed physical register
-                                # with renaming table not changed yet
-                                phy_index = self.physical_register_file.rename()
-
-                                # Update data fields
-                                reg_data["arch_index"] = reg_data["index"]
-                                reg_data["index"] = phy_index
-                                # Get old physical register index
-                                reg_data[
-                                    "LPRd"
-                                ] = self.physical_register_file.get_physical_index(
-                                    reg_data["arch_index"]
-                                )
-
-                                # Update renaming table with new physical index
-                                self.physical_register_file.set_physical_index(
-                                    reg_data["arch_index"], phy_index
-                                )
-
                 # get register mapping
                 if "read_regs" in data:
                     # CSR no renaming
@@ -409,6 +472,45 @@ class reorder_buffer(Module):
                                 # In-order entering ROB guarantees consistency
                                 reg_data["index"] = phy_index
                                 reg_data["p"] = self.physical_register_file.p[phy_index]
+                                if reg_data["p"] is True:
+                                    reg_data[
+                                        "value"
+                                    ] = self.physical_register_file.read_physical_register(
+                                        phy_index
+                                    )
+
+                # rename
+                if "write_regs" in data:
+                    # CSR no renaming
+
+                    # GPR
+                    if "int" in data["write_regs"]:
+                        for reg_data in data["write_regs"]["int"]:
+                            # x0
+                            if reg_data["index"] == 0:
+                                reg_data["arch_index"] = 0
+                                reg_data["index"] = None
+                                reg_data["LPRd"] = None
+                            # Other architectural registers
+                            elif self.physical_register_file.has_free_register():
+                                # Get newly-renamed physical register
+                                # with renaming table not changed yet
+                                phy_index = self.physical_register_file.rename()
+
+                                # Update data fields
+                                reg_data["arch_index"] = reg_data["index"]
+                                reg_data["index"] = phy_index
+                                # Get old physical register index
+                                reg_data[
+                                    "LPRd"
+                                ] = self.physical_register_file.get_physical_index(
+                                    reg_data["arch_index"]
+                                )
+
+                                # Update renaming table with new physical index
+                                self.physical_register_file.set_physical_index(
+                                    reg_data["arch_index"], phy_index
+                                )
 
                 # allocate ROB entry
                 entry_index = self.allocate_entry()
@@ -419,6 +521,8 @@ class reorder_buffer(Module):
                 # fill ROB entry
                 self.fill_entry(data, entry_index)
 
+                print("ROB[{}]".format(entry_index), self.entries[entry_index])
+
                 processed_item.append(i)
             else:
                 # ROB/regfile is full
@@ -426,8 +530,6 @@ class reorder_buffer(Module):
         return processed_item
 
     def handle_EX_input(self, port_data):
-        # FU_status
-        self.function_unit_status = port_data["status"]
 
         # Trap info
         # TODO
@@ -436,6 +538,10 @@ class reorder_buffer(Module):
         for i, data in enumerate(port_data["results"]):
             entry_index = data["ROB_entry"]
 
+            # # FU_status
+            # self.function_unit_status[data['function_unit_type']][data['function_unit_index']]['latency'] = None
+            # print("EX->[ROB]: Status update:", self.function_unit_status)
+
             # update physical register
             # Note: freelist are not updated yet (on committing)
             if "write_regs" in data:
@@ -443,14 +549,6 @@ class reorder_buffer(Module):
                 # CSR
 
                 # Note: CSR should be written on commiting
-
-                # if "csr" in data["write_regs"]:
-                #     for write_reg in data["write_regs"]["csr"]:
-                #         if "value" in write_reg:
-                #             self.physical_register_file.write_csr(
-                #                 write_reg["index"],
-                #                 reg_type(write_reg["value"]),
-                #             )
 
                 # GPR
                 if "int" in data["write_regs"]:
@@ -475,14 +573,27 @@ class reorder_buffer(Module):
                             self.entries[i].p1 is False
                         ):
                             self.entries[i].p1 = True
+                            self.entries[i].data["read_regs"]["int"][0]["p"] = True
+                            self.entries[i].data["read_regs"]["int"][0][
+                                "value"
+                            ] = self.physical_register_file.read_physical_register(
+                                self.entries[i].PRS1
+                            )
 
                         if (self.entries[i].PRS2 == self.entries[entry_index].PRd) and (
                             self.entries[i].p2 is False
                         ):
                             self.entries[i].p2 = True
+                            self.entries[i].data["read_regs"]["int"][1]["p"] = True
+                            self.entries[i].data["read_regs"]["int"][1][
+                                "value"
+                            ] = self.physical_register_file.read_physical_register(
+                                self.entries[i].PRS2
+                            )
 
             # Mark entry as post-EX
             self.entries[entry_index].ex = True
+            self.entries[entry_index].inflight = False
             self.entries[entry_index].data = data
 
             # TODO: branch and trap control
@@ -510,6 +621,13 @@ class reorder_buffer(Module):
             for _, port in cluster.items():
                 port.print()
 
+    def flush(self):
+        self.function_unit_status = {
+            "ALU": [{"latency": 0} for i in range(2)],
+            # TODO
+        }
+        return super().flush()
+
 
 # Test
 if __name__ == "__main__":
@@ -517,22 +635,25 @@ if __name__ == "__main__":
 
     decode_result = [
         {
-            "name": "JAL",
-            "imm": [72],
-            "write_regs": {"int": [{"index": 0}]},
-            "pc": 2147483648,
-            "insn_code": "0x480006f",
+            "name": "ADDI",
+            "imm": [0],
+            "read_regs": {"int": [{"index": 0}]},
+            "write_regs": {"int": [{"index": 1}]},
+            "pc": 2147483720,
+            "insn_code": "0x93",
             "insn_len": 4,
         },
         {
-            "name": "CSRRS",
-            "read_regs": {"int": [{"index": 0}], "csr": [{"index": 834}]},
-            "write_regs": {"int": [{"index": 30}], "csr": [{"index": 834}]},
-            "pc": 2147483652,
-            "insn_code": "0x34202f73",
+            "name": "ADDI",
+            "imm": [0],
+            "read_regs": {"int": [{"index": 0}]},
+            "write_regs": {"int": [{"index": 2}]},
+            "pc": 2147483724,
+            "insn_code": "0x113",
             "insn_len": 4,
         },
     ]
+
     ROB = reorder_buffer(32, REG.PhysicalRegisterFile(100), 2)
     ROB.ports["input"]["ID"].data = decode_result
     ROB.ports["input"]["ID"].update_status()

@@ -59,18 +59,14 @@ class PhysicalRegisterFile(Module):
         )
         self.p[index] = False
         self.freelist.append(index)
-    
+
     def rollback_register(self, index):
         assert index is not None, "Rolling back None"
         assert (
             index not in self.freelist
         ), "Rolling back register in freelist p[{}]".format(index)
-        assert self.p[index] is False, "Rolling back valid register p[{}]".format(
-            index
-        )
         self.p[index] = False
         self.freelist.append(index)
-
 
     def get_physical_index(self, index):
         return self.rename_table[register_name[index]]
@@ -79,6 +75,7 @@ class PhysicalRegisterFile(Module):
         self.rename_table[register_name[arch_index]] = phy_index
 
     def read_physical_register(self, index):
+        print("reading phy_reg[{}]".format(str(index)))
         if index is None:
             return None
         return (
@@ -113,7 +110,9 @@ class PhysicalRegisterFile(Module):
         print("Renaming table")
         for i in range(32):
             print(
-                "{0:>5s}:{1:<5s}".format(register_name[i], str(self.get_physical_index(i))),
+                "{0:>5s}:{1:<5s}".format(
+                    register_name[i], str(self.get_physical_index(i))
+                ),
                 end="\t",
             )
             if i % 4 == 3:
