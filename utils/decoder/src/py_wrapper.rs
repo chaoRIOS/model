@@ -483,6 +483,10 @@ fn rustdecoder(_py: Python, m: &PyModule) -> PyResult<()> {
                     // System
                     Instruction::Ecall => {
                         result_inst.name = String::from("ECALL");
+                        result_inst.read_reg = Some(vec![(
+                            String::from("csr"),
+                            csr_address::CSR_MTVEC_ADDRESS as u64,
+                        )]);
                     }
                     Instruction::Ebreak => {
                         result_inst.name = String::from("EBREAK");
