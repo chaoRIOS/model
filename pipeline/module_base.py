@@ -78,8 +78,8 @@ class Port:
         # EX output data, multi-field
         # TODO: Trap info
         if isinstance(data, dict):
-            if 'results' in data:
-                for item in data['results']:
+            if "results" in data:
+                for item in data["results"]:
                     print("  [")
                     for k, v in item.items():
                         if isinstance(v, word_type) or isinstance(v, double_type):

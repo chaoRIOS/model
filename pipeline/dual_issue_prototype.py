@@ -67,39 +67,39 @@ class Simulator:
     def tick(self):
         # debug logging
         print("-" * 10, "tick @ cycle:", self.cycle, "-" * 10)
-        
-        if self.IF.ports['output']['ID'].valid and self.ID.ports['input']['IF'].ready:
-            self.ID.ports['input']['IF'].data = self.IF.ports['output']['ID'].data
-            self.ID.ports['input']['IF'].update_status()
-            self.IF.ports['output']['ID'].data = None
-            self.IF.ports['output']['ID'].update_status()
 
-        if self.ID.ports['output']['ROB'].valid and self.ROB.ports["input"]["ID"].ready:
-            self.ROB.ports["input"]["ID"].data = self.ID.ports['output']['ROB'].data
+        if self.IF.ports["output"]["ID"].valid and self.ID.ports["input"]["IF"].ready:
+            self.ID.ports["input"]["IF"].data = self.IF.ports["output"]["ID"].data
+            self.ID.ports["input"]["IF"].update_status()
+            self.IF.ports["output"]["ID"].data = None
+            self.IF.ports["output"]["ID"].update_status()
+
+        if self.ID.ports["output"]["ROB"].valid and self.ROB.ports["input"]["ID"].ready:
+            self.ROB.ports["input"]["ID"].data = self.ID.ports["output"]["ROB"].data
             self.ROB.ports["input"]["ID"].update_status()
-            self.ID.ports['output']['ROB'].data = None
-            self.ID.ports['output']['ROB'].update_status()
+            self.ID.ports["output"]["ROB"].data = None
+            self.ID.ports["output"]["ROB"].update_status()
 
-        if self.ROB.ports["output"]["EX"].valid and self.EX.ports['input']['ROB'].ready:
+        if self.ROB.ports["output"]["EX"].valid and self.EX.ports["input"]["ROB"].ready:
             # input data from ROB: enters backend at T cycle
             # complete_result: enters before T-1 cycle
-            self.EX.ports['input']['ROB'].data = self.ROB.ports["output"]["EX"].data
-            self.EX.ports['input']['ROB'].update_status()
+            self.EX.ports["input"]["ROB"].data = self.ROB.ports["output"]["EX"].data
+            self.EX.ports["input"]["ROB"].update_status()
             self.ROB.ports["output"]["EX"].data = None
             self.ROB.ports["output"]["EX"].update_status()
 
-        if self.EX.ports['output']['ROB'].valid and self.ROB.ports["input"]["EX"].ready:
+        if self.EX.ports["output"]["ROB"].valid and self.ROB.ports["input"]["EX"].ready:
             # Single issue 0-timing LSU
             self.ROB.ports["input"]["EX"].data = self.load_store_unit.tick(
-                self.EX.ports['output']['ROB'].data
+                self.EX.ports["output"]["ROB"].data
             ).step()
             self.ROB.ports["input"]["EX"].update_status()
-            self.EX.ports['output']['ROB'].data = None
-            self.EX.ports['output']['ROB'].update_status()
+            self.EX.ports["output"]["ROB"].data = None
+            self.EX.ports["output"]["ROB"].update_status()
 
-        if self.ROB.ports["output"]["IF"].valid and self.IF.ports['input']['ROB'].ready:
-            self.IF.ports['input']['ROB'].data = self.ROB.ports["output"]["IF"].data
-            self.IF.ports['input']['ROB'].update_status()
+        if self.ROB.ports["output"]["IF"].valid and self.IF.ports["input"]["ROB"].ready:
+            self.IF.ports["input"]["ROB"].data = self.ROB.ports["output"]["IF"].data
+            self.IF.ports["input"]["ROB"].update_status()
             self.ROB.ports["output"]["IF"].data = None
             self.ROB.ports["output"]["IF"].update_status()
 
@@ -137,13 +137,13 @@ class Simulator:
 
         if self.ROB.step() is True:
             # Flush
-            return        
+            return
 
         self.EX.step()
 
         # 2) Implictly access memory
         self.load_store_unit.step()
-    
+
         self.reg.print_registers()
 
     def flush(self):
