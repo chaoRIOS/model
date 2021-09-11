@@ -25,16 +25,20 @@ def JALR(data):
 def BEQ(data):
     if data["read_regs"]["int"][0]["value"] == data["read_regs"]["int"][1]["value"]:
         data["next_pc"] = reg_type(data["pc"] + reg_type(data["imm"][0]))
+        data["taken"] = True
     else:
         data["next_pc"] = reg_type(data["pc"] + data["insn_len"])
+        data["taken"] = False
     return data
 
 # TODO: fix binary complement
 def BNE(data):
     if data["read_regs"]["int"][0]["value"] != data["read_regs"]["int"][1]["value"]:
         data["next_pc"] = reg_type(data["pc"] + reg_type(data["imm"][0]))
+        data["taken"] = True
     else:
         data["next_pc"] = reg_type(data["pc"] + data["insn_len"])
+        data["taken"] = False
     return data
 
 def BLT(data):
@@ -43,8 +47,10 @@ def BLT(data):
     rhs = (np.invert(data["read_regs"]["int"][1]["value"]) + 1) if data["read_regs"]["int"][1]["value"] & reg_type(0x8000_0000_0000_0000) == 0x8000_0000_0000_0000 else data["read_regs"]["int"][1]["value"]
     if lhs < rhs:
         data["next_pc"] = reg_type(data["pc"] + reg_type(data["imm"][0]))
+        data["taken"] = True
     else:
         data["next_pc"] = reg_type(data["pc"] + data["insn_len"])
+        data["taken"] = False
     return data
 
 def BGE(data):
@@ -53,22 +59,28 @@ def BGE(data):
     rhs = (np.invert(data["read_regs"]["int"][1]["value"]) + 1) if data["read_regs"]["int"][1]["value"] & reg_type(0x8000_0000_0000_0000) == 0x8000_0000_0000_0000 else data["read_regs"]["int"][1]["value"]
     if lhs >= rhs:
         data["next_pc"] = reg_type(data["pc"] + reg_type(data["imm"][0]))
+        data["taken"] = True
     else:
         data["next_pc"] = reg_type(data["pc"] + data["insn_len"])
+        data["taken"] = False
     return data
 
 def BLTU(data):
     if data["read_regs"]["int"][0]["value"] < data["read_regs"]["int"][1]["value"]:
         data["next_pc"] = reg_type(data["pc"] + reg_type(data["imm"][0]))
+        data["taken"] = True
     else:
         data["next_pc"] = reg_type(data["pc"] + data["insn_len"])
+        data["taken"] = False
     return data
 
 def BGEU(data):
     if data["read_regs"]["int"][0]["value"] >= data["read_regs"]["int"][1]["value"]:
         data["next_pc"] = reg_type(data["pc"] + reg_type(data["imm"][0]))
+        data["taken"] = True
     else:
         data["next_pc"] = reg_type(data["pc"] + data["insn_len"])
+        data["taken"] = False
     return data
 
 

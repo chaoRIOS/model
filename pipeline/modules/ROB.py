@@ -227,17 +227,9 @@ class reorder_buffer(Module):
         # self.ports["input"]["EX"].update_status()
         if self.ports["input"]["EX"].valid is True:
             # TODO: extend this interface for Trap handling
-            data, is_branch, break_entry_index = self.handle_EX_input(
-                self.ports["input"]["EX"].data
-            )
+            self.handle_EX_input(self.ports["input"]["EX"].data)
 
-            if is_branch:
-                # TODO: Branch / Trap
-                # Hold EX->[ROB].ready low
-                pass
-            else:
-                self.ports["input"]["EX"].data = None
-
+            self.ports["input"]["EX"].data = None
             self.ports["input"]["EX"].update_status()
 
     def update_entry(self):
@@ -373,46 +365,53 @@ class reorder_buffer(Module):
 
                     # Branch controlling logic
                     # TODO: Exception handling
-                    if data["name"] in [
-                        "BNE",
-                        "BNE",
-                        "BLT",
-                        "BGE",
-                        "BLTU",
-                        "BGEU",
-                        "JAL",
-                        "JALR",
-                    ]:
-                        if data["next_pc"] == reg_type(data["pc"] + data["insn_len"]):
-                            # Not taken
-                            pass
-                        else:
-                            # Taken
-                            # return to IFU
-                            self.ports["output"]["IF"].data = data
-                            self.ports["output"]["IF"].update_status()
+                    if (
+                        (
+                            data["name"]
+                            in [
+                                "BNE",
+                                "BEQ",
+                                "BLT",
+                                "BGE",
+                                "BLTU",
+                                "BGEU",
+                            ]
+                        )
+                        and (data["taken"] is True)
+                    ) or (
+                        data["name"]
+                        in [
+                            "JAL",
+                            "JALR",
+                            "URET",
+                            "SRET",
+                            "MRET",
+                        ]
+                    ):
+                        self.ports["output"]["IF"].data = data
+                        self.ports["output"]["IF"].update_status()
 
-                            # Flush ROB & reg_file
-                            # TODO: snapshot
-                            # TODO: Add branch prediction
+                        # Flush ROB & reg_file
+                        # TODO: snapshot
+                        # TODO: Add branch prediction
 
-                            # Roll_back
-                            for i in range(len(self.busy_entry_index)):
+                        # Roll_back
+                        for i in range(len(self.busy_entry_index)):
 
-                                entry_index = self.busy_entry_index.pop()
-                                self.free_entry_index.insert(0, entry_index)
+                            entry_index = self.busy_entry_index.pop()
+                            self.free_entry_index.insert(0, entry_index)
 
-                                if self.entries[entry_index].Rd is not None:
-                                    self.physical_register_file.set_physical_index(
-                                        self.entries[entry_index].Rd,
-                                        self.entries[entry_index].LPRd,
-                                    )
-                                    self.physical_register_file.rollback_register(
-                                        self.entries[entry_index].PRd
-                                    )
+                            if self.entries[entry_index].Rd is not None:
+                                self.physical_register_file.set_physical_index(
+                                    self.entries[entry_index].Rd,
+                                    self.entries[entry_index].LPRd,
+                                )
+                                self.physical_register_file.rollback_register(
+                                    self.entries[entry_index].PRd
+                                )
 
-                                self.entries[entry_index].invalid()
-                            return True
+                            self.entries[entry_index].invalid()
+                        return True
                 else:
                     return False
 
@@ -596,25 +595,7 @@ class reorder_buffer(Module):
             self.entries[entry_index].inflight = False
             self.entries[entry_index].data = data
 
-            # TODO: branch and trap control
-            if data["name"] in [
-                "BNE",
-                "BNE",
-                "BLT",
-                "BGE",
-                "BLTU",
-                "BGEU",
-                "JAL",
-                "JALR",
-            ]:
-                # TODO: Branch to 'next_pc'
-                if data["next_pc"] == reg_type(data["pc"] + data["insn_len"]):
-                    # Not taken
-                    pass
-                else:
-                    # return to 'is_branch'
-                    return port_data, True, i
-        return port_data, False, 0
+        return
 
     def print_ports(self):
         for _, cluster in self.ports.items():
