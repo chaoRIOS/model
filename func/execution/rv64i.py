@@ -465,6 +465,9 @@ def FENCEI(data):
 
 def ECALL(data):
     data["next_pc"] = data["read_regs"]["csr"][0]["value"]
+    # TODO: implement ECALL causes
+    # Currently use 11: Environment call from M-mode
+    data["write_regs"]["csr"][0]["value"] = reg_type(11)
     warnings.warn("not supported", UserWarning)
     return data
 

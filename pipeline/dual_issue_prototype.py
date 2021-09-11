@@ -123,7 +123,7 @@ class Simulator:
         # 2) Implictly access memory
         self.load_store_unit.step()
 
-        self.reg.print_registers()
+        # self.reg.print_registers()
 
     def flush(self):
         print("-" * 10, " flush @ cycle:", self.cycle, "-" * 10)

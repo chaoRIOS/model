@@ -65,7 +65,7 @@ class Port:
         self.valid = self.data is not None
         self.ready = self.data is None
 
-        self.print()
+        # self.print()
 
     def print(self):
         print("{}: [valid:{} ready:{}]".format(self.name, self.valid, self.ready))

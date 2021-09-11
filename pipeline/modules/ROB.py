@@ -359,7 +359,7 @@ class reorder_buffer(Module):
             for i in range(self.issue_number):
                 entry = self.entries[self.busy_entry_index[0]]
                 if entry.is_complete():
-                    print("committing:[{}]".format(self.busy_entry_index[0]), entry)
+                    print("committing:[{}]".format(self.busy_entry_index[0]), hex(entry.data['pc']), entry.data['name'])
                     data = entry.data
 
                     # Update CSR
