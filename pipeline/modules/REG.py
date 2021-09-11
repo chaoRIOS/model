@@ -94,9 +94,11 @@ class PhysicalRegisterFile(Module):
             )
 
     def read_csr(self, index):
+        print("[CSR] read [{}] -> {}".format(index, hex(self.csr[index])))
         return self.csr[index]
 
     def write_csr(self, index, value):
+        print("[CSR] write [{}] <- {}".format(index, hex(value)))
         self.csr[index] = reg_type(value)
 
     def read_register(self, register_type, arch_index):

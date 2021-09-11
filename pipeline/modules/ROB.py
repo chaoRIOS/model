@@ -308,6 +308,14 @@ class reorder_buffer(Module):
                         self.entries[entry_index].data[
                             "function_unit_type"
                         ] = function_unit_type
+                        
+                        # Read CSR
+                        if "read_regs" in self.entries[entry_index].data:
+                            if "csr" in self.entries[entry_index].data["read_regs"]:
+                                for reg_data in self.entries[entry_index].data["read_regs"]["csr"]:
+                                    reg_data["value"] = self.physical_register_file.read_csr(
+                                        reg_data["index"]
+                                    )
 
                         # Perpare output data
                         if self.ports["output"]["EX"].data is None:
@@ -438,11 +446,7 @@ class reorder_buffer(Module):
                 # get register mapping
                 if "read_regs" in data:
                     # CSR no renaming
-                    if "csr" in data["read_regs"]:
-                        for reg_data in data["read_regs"]["csr"]:
-                            reg_data["value"] = self.physical_register_file.read_csr(
-                                reg_data["index"]
-                            )
+                    # Note: CSR should be read on issueing
 
                     # GPR
                     if "int" in data["read_regs"]:
@@ -536,7 +540,8 @@ class reorder_buffer(Module):
         # instruction results
         for i, data in enumerate(port_data["results"]):
             entry_index = data["ROB_entry"]
-
+            self.entries[entry_index].data = data
+            print("writing back[{}]".format(entry_index), self.entries[entry_index])
             # # FU_status
             # self.function_unit_status[data['function_unit_type']][data['function_unit_index']]['latency'] = None
             # print("EX->[ROB]: Status update:", self.function_unit_status)
