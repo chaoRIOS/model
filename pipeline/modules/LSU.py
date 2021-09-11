@@ -34,7 +34,7 @@ class LSU(Module):
                         load_request["addr"], load_request["len"]
                     )
 
-            if "write_mem" in data:
+            if "store_mem" in data:
                 for store_request in data["store_mem"]:
                     self.memory.write_bytes(
                         store_request["addr"],
