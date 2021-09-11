@@ -9,6 +9,7 @@ sys.path.append("../..")
 
 from config.data_types import *
 from config.register_name import register_name
+from config.function_unit_types import function_unit_types
 from module_base import Module, Port
 
 
@@ -131,6 +132,7 @@ class reorder_buffer(Module):
 
         self.function_unit_status = {
             "ALU": [{"latency": 0} for i in range(2)],
+            "CSR": [{"latency": 0} for i in range(1)]
             # TODO
         }
 
@@ -173,8 +175,9 @@ class reorder_buffer(Module):
     # Function unit status methods
     def function_unit_ready(self, opcode, latency=1):
         # TODO: add opcode >> FU_type mapping
-        if opcode is not None:
-            function_unit_type = "ALU"
+        if (opcode is not None) and (opcode != "ILLEGAL"):
+            function_unit_type = function_unit_types[opcode]
+            # CSR FU is also dispatched in odinary way
             for function_unit_index, function_unit in enumerate(
                 self.function_unit_status[function_unit_type]
             ):
@@ -308,12 +311,16 @@ class reorder_buffer(Module):
                         self.entries[entry_index].data[
                             "function_unit_type"
                         ] = function_unit_type
-                        
+
                         # Read CSR
                         if "read_regs" in self.entries[entry_index].data:
                             if "csr" in self.entries[entry_index].data["read_regs"]:
-                                for reg_data in self.entries[entry_index].data["read_regs"]["csr"]:
-                                    reg_data["value"] = self.physical_register_file.read_csr(
+                                for reg_data in self.entries[entry_index].data[
+                                    "read_regs"
+                                ]["csr"]:
+                                    reg_data[
+                                        "value"
+                                    ] = self.physical_register_file.read_csr(
                                         reg_data["index"]
                                     )
 
@@ -368,8 +375,12 @@ class reorder_buffer(Module):
                     # deallocate LPRD
                     self.physical_register_file.deallocate_register(entry.LPRd)
 
+                    # deallocate ROB entry
                     entry.invalid()
                     self.free_entry_index.append(self.busy_entry_index.popleft())
+
+                    # deallocate CSR function unit
+                    self.function_unit_status["CSR"][0]["latency"] = 0
 
                     # Branch controlling logic
                     # TODO: Exception handling
@@ -394,6 +405,8 @@ class reorder_buffer(Module):
                             "URET",
                             "SRET",
                             "MRET",
+                            "ECALL",
+                            # "EBREAK"
                         ]
                     ):
                         self.ports["output"]["IF"].data = data
@@ -426,11 +439,14 @@ class reorder_buffer(Module):
     def tick_function_unit_status(self):
         # FU status of ROB should be 1 cycle ahead of that of EX
         for function_unit_type in self.function_unit_status:
-            for function_unit_index, function_unit in enumerate(
-                self.function_unit_status[function_unit_type]
-            ):
-                # Decrement
-                function_unit["latency"] = max(function_unit["latency"] - 1, 0)
+            # Note: CSR status should be updated on committing
+            # last inflight CSR instruction
+            if function_unit_type != "CSR":
+                for function_unit_index, function_unit in enumerate(
+                    self.function_unit_status[function_unit_type]
+                ):
+                    # Decrement
+                    function_unit["latency"] = max(function_unit["latency"] - 1, 0)
 
     def handle_ID_input(self, port_data):
         # instructions from ID stage
@@ -446,6 +462,7 @@ class reorder_buffer(Module):
                 # get register mapping
                 if "read_regs" in data:
                     # CSR no renaming
+
                     # Note: CSR should be read on issueing
 
                     # GPR
@@ -610,6 +627,7 @@ class reorder_buffer(Module):
     def flush(self):
         self.function_unit_status = {
             "ALU": [{"latency": 0} for i in range(2)],
+            "CSR": [{"latency": 0} for i in range(1)]
             # TODO
         }
         return super().flush()

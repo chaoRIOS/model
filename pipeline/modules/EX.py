@@ -12,6 +12,7 @@ class EX(Module):
         super().__init__()
         self.function_unit_status = {
             "ALU": [{"data": None, "latency": 0} for i in range(2)],
+            "CSR": [{"data": None, "latency": 0} for i in range(1)],
             # TODO
         }
         # self.reg = reg
@@ -65,6 +66,7 @@ class EX(Module):
     def flush(self):
         self.function_unit_status = {
             "ALU": [{"data": None, "latency": 0} for i in range(2)],
+            "CSR": [{"data": None, "latency": 0} for i in range(1)],
             # TODO
         }
         return super().flush()
