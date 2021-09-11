@@ -285,6 +285,7 @@ def FENCEI(data):
     return data
 
 def ECALL(data):
+    data["next_pc"] = data["read_regs"]["csr"][0]["value"]
     warnings.warn("not supported", UserWarning)
     return data
 
