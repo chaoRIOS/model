@@ -33,7 +33,7 @@ rv64ui_p_tests = [
 
 class Simulator:
     def __init__(self, data):
-        # self.tohost_addr = data.tohost_addr
+        self.tohost_addr = data.tohost_addr
         self.cycle = 1
 
         self.reg = REG.PhysicalRegisterFile(100)
@@ -105,27 +105,6 @@ class Simulator:
 
             self.flush_signal = True
 
-        # # 2) write back to register file
-        # self.reg.tick(load_store_result).step()
-
-        # # TODO: for riscv-test isa test only
-        # if decode_result is not None:
-        #     for data in decode_result:
-        #         if data["name"] == "ECALL":
-        #             if self.reg.read_register("int", 10) == 0:
-        #                 print("Test Passed:{}".format(test))
-        #                 self.exit = True
-        #             elif self.reg.read_register("int", 10) is None:
-        #                 pass
-        #             else:
-        #                 raise UserWarning(
-        #                     "\nTest failed:{} at pc:{}".format(
-        #                         test, hex(self.IF.pc)
-        #                     )
-        #                 )
-
-        # debug logging
-
     # Updata internal status
     def step(self):
         print("-" * 10, " step @ cycle:", self.cycle, "-" * 10)
@@ -170,4 +149,17 @@ for test in rv64ui_p_tests:
 
         if cpu.cycle > 1000:
             cpu.exit = True
+
+        # TODO: for riscv-test isa test only
+        endcode = cpu.memory.read_byte(cpu.tohost_addr)
+        if endcode != 0:
+            print("cycles = {}".format(cpu.cycle))
+            if endcode == 1:
+                print("Test {} Passed".format(test))
+            else:
+                print(
+                    "Test {} Failed at test[{}]".format(test, endcode >> byte_type(1))
+                )
+
+            break
     break

@@ -1,18 +1,18 @@
-#====================================================
+# ====================================================
 # file:       elf_parser.py
 # created by: chao wang
 # notes:      to wrap rust-implemented elf parser
-#====================================================
+# ====================================================
 
 from . import elfparser
 
-# ------------------- 
+# -------------------
 # Load elf file into Python object
-# 
+#
 # Args:
 #   `elf_path`: path to elf file
 #   `memory_capacity`: allocated capacity for program
-# 
+#
 # Return value:
 # struct ElfContext {
 #     memory: Memory{
