@@ -130,17 +130,21 @@ class reorder_buffer(Module):
             "output": {"EX": Port("[ROB]->EX"), "IF": Port("[ROB]->IF")},
         }
 
-        self.function_unit_status = {
-            "ALU": [{"latency": 0} for i in range(2)],
-            "CSR": [{"latency": 0} for i in range(1)]
-            # TODO
-        }
+        self.function_unit_status =  self.new_function_units()
 
         # Unified physical register file
         self.physical_register_file = physical_register_file
 
         # Configurable issue number
         self.issue_number = issue_number
+
+    def new_function_units(self):
+        return {
+            "ALU": [{"latency": 0} for i in range(2)],
+            "CSR": [{"latency": 0} for i in range(1)],
+            "AGU": [{"latency": 0} for i in range(1)]
+            # TODO
+        }
 
     # Entry updating methods
     def has_free_entry(self):
@@ -625,11 +629,7 @@ class reorder_buffer(Module):
                 port.print()
 
     def flush(self):
-        self.function_unit_status = {
-            "ALU": [{"latency": 0} for i in range(2)],
-            "CSR": [{"latency": 0} for i in range(1)]
-            # TODO
-        }
+        self.function_unit_status = self.new_function_units()
         return super().flush()
 
 

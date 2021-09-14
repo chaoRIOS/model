@@ -10,15 +10,18 @@ import func.execution.rv64i as instructions
 class EX(Module):
     def __init__(self) -> None:
         super().__init__()
-        self.function_unit_status = {
-            "ALU": [{"data": None, "latency": 0} for i in range(2)],
-            "CSR": [{"data": None, "latency": 0} for i in range(1)],
-            # TODO
-        }
-        # self.reg = reg
         self.ports = {
             "input": {"ROB": Port("ROB->[EX]")},
             "output": {"ROB": Port("[EX]->ROB")},
+        }
+        self.function_unit_status = self.new_function_units()
+    
+    def new_function_units(self):
+        return {
+            "ALU": [{"data": None, "latency": 0} for i in range(2)],
+            "CSR": [{"data": None, "latency": 0} for i in range(1)],
+            "AGU": [{"data": None, "latency": 0} for i in range(1)]
+            # TODO
         }
 
     # Execute internal logic
@@ -64,9 +67,5 @@ class EX(Module):
         return getattr(instructions, data["name"])(data)
 
     def flush(self):
-        self.function_unit_status = {
-            "ALU": [{"data": None, "latency": 0} for i in range(2)],
-            "CSR": [{"data": None, "latency": 0} for i in range(1)],
-            # TODO
-        }
+        self.function_unit_status = self.new_function_units()
         return super().flush()
