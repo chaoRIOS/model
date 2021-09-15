@@ -1,0 +1,20 @@
+[package]
+name = "riscv-decode"
+version = "0.2.0"
+authors = ["Jonathan Behrens <fintelia@gmail.com>"]
+edition = "2018"
+description = "A simple library for decoding RISC-V instructions"
+repository = "https://github.com/fintelia/riscv-decode"
+license = "MIT/Apache-2.0"
+categories = ["no-std", "embedded", "encoding", "parsing"]
+keywords = ["riscv"]
+
+[lib]
+name = "rustdecoder"
+crate-type = ["cdylib"]
+
+[dependencies]
+
+[dependencies.pyo3]
+version = "0.14.1"
+features = ["extension-module"]

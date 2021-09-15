@@ -1,0 +1,18 @@
+[package]
+name = "elf-parser"
+version = "0.1.0"
+authors = ["chaoRIOS <chao.w@rioslab.org>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "elfparser"
+crate-type = ["cdylib"]
+
+[dependencies]
+fnv = "1.0.7"
+
+[dependencies.pyo3]
+version = "0.14.1"
+features = ["extension-module"]
