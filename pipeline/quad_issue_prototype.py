@@ -39,9 +39,9 @@ class Simulator:
         self.reg = REG.PhysicalRegisterFile(100)
         self.memory = MEM.Memory(data.memory.data)
 
-        self.IF = IFU.IFU(self.memory, reg_type(data.entry_pc))
+        self.IF = IFU.IFU(self.memory, reg_type(data.entry_pc), 4)
         self.ID = IDU.IDU()
-        self.ROB = ROB.reorder_buffer(32, self.reg, 2)
+        self.ROB = ROB.reorder_buffer(80, self.reg, 8)
         self.EX = EX.EX()
         self.load_store_unit = LSU.LSU(self.memory)
 

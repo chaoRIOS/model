@@ -131,14 +131,13 @@ class reorder_buffer(Module):
             "output": {"EX": Port("[ROB]->EX"), "IF": Port("[ROB]->IF")},
         }
 
-        self.function_unit_status =  FU.new_function_units()
+        self.function_unit_status = FU.new_function_units()
 
         # Unified physical register file
         self.physical_register_file = physical_register_file
 
         # Configurable issue number
         self.issue_number = issue_number
-
 
     # Entry updating methods
     def has_free_entry(self):
@@ -346,7 +345,11 @@ class reorder_buffer(Module):
             for i in range(self.issue_number):
                 entry = self.entries[self.busy_entry_index[0]]
                 if entry.is_complete():
-                    print("committing:[{}]".format(self.busy_entry_index[0]), hex(entry.data['pc']), entry.data['name'])
+                    print(
+                        "committing:[{}]".format(self.busy_entry_index[0]),
+                        hex(entry.data["pc"]),
+                        entry.data["name"],
+                    )
                     data = entry.data
 
                     # Update CSR

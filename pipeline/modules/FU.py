@@ -1,7 +1,7 @@
 function_unit_numbers = {
-    "ALU": 2,
+    "ALU": 4,
     "CSR": 1,
-    "AGU": 1,
+    "AGU": 3,
 }
 
 

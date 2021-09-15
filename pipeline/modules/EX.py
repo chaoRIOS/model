@@ -7,6 +7,7 @@ from module_base import Module, Port
 import func.execution.rv64i as instructions
 from . import FU
 
+
 class EX(Module):
     def __init__(self) -> None:
         super().__init__()
@@ -14,7 +15,7 @@ class EX(Module):
             "input": {"ROB": Port("ROB->[EX]")},
             "output": {"ROB": Port("[EX]->ROB")},
         }
-        self.function_unit_status = FU.new_function_units(with_data = True)
+        self.function_unit_status = FU.new_function_units(with_data=True)
 
     # Execute internal logic
     def step(self):
@@ -59,5 +60,5 @@ class EX(Module):
         return getattr(instructions, data["name"])(data)
 
     def flush(self):
-        self.function_unit_status = FU.new_function_units(with_data = True)
+        self.function_unit_status = FU.new_function_units(with_data=True)
         return super().flush()
