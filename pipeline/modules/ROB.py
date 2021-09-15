@@ -159,17 +159,6 @@ class reorder_buffer(Module):
     def fill_entry(self, data, index):
         self.entries[index].fill_with(data)
 
-    # TODO: move to module_base
-    # I/O methods
-    def check_port_ready(self, port_type, index):
-        return self.ports[port_type][index].ready
-
-    def check_port_valid(self, port_type, index):
-        return self.ports[port_type][index].valid
-
-    def set_port_data(self, port_type, index, data):
-        self.ports[port_type][index].data = data
-
     # Function unit status methods
     def function_unit_ready(self, opcode, latency=1):
         # TODO: add opcode >> FU_type mapping
