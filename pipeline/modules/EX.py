@@ -5,7 +5,7 @@ from config.data_types import *
 from config.register_name import register_name
 from module_base import Module, Port
 import func.execution.rv64i as instructions
-
+from . import FU
 
 class EX(Module):
     def __init__(self) -> None:
@@ -14,15 +14,7 @@ class EX(Module):
             "input": {"ROB": Port("ROB->[EX]")},
             "output": {"ROB": Port("[EX]->ROB")},
         }
-        self.function_unit_status = self.new_function_units()
-    
-    def new_function_units(self):
-        return {
-            "ALU": [{"data": None, "latency": 0} for i in range(2)],
-            "CSR": [{"data": None, "latency": 0} for i in range(1)],
-            "AGU": [{"data": None, "latency": 0} for i in range(1)]
-            # TODO
-        }
+        self.function_unit_status = FU.new_function_units(with_data = True)
 
     # Execute internal logic
     def step(self):
@@ -67,5 +59,5 @@ class EX(Module):
         return getattr(instructions, data["name"])(data)
 
     def flush(self):
-        self.function_unit_status = self.new_function_units()
+        self.function_unit_status = FU.new_function_units(with_data = True)
         return super().flush()

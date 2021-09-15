@@ -49,20 +49,6 @@ class Simulator:
 
         self.exit = False
 
-    def print(self, name, data):
-        if data is None:
-            print("{}: {}".format(name, "None"))
-            return
-        print(name)
-        for item in data:
-            print("  [")
-            for k, v in item.items():
-                if isinstance(v, word_type) or isinstance(v, double_type):
-                    print("    {}: {:08x}".format(k, v))
-                else:
-                    print("    {}: {}".format(k, str(v)))
-            print("  ]")
-
     # Transport data
     def tick(self):
         # debug logging
