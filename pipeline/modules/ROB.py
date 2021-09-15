@@ -187,7 +187,7 @@ class reorder_buffer(Module):
 
         self.allocate()
 
-        self.update_entry()
+        self.wake_up()
 
         self.issue()
 
@@ -222,7 +222,7 @@ class reorder_buffer(Module):
             self.ports["input"]["EX"].data = None
             self.ports["input"]["EX"].update_status()
 
-    def update_entry(self):
+    def wake_up(self):
         # Update register mapping
         for entry_index in self.busy_entry_index:
             if (
