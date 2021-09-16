@@ -182,7 +182,7 @@ class reorder_buffer(Module):
 
         if self.commit() is True:
             # Flush
-            return
+            return True
 
         self.allocate()
 

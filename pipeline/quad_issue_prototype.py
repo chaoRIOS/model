@@ -53,8 +53,6 @@ class Simulator:
             "ROB->IF",
         ]
 
-        self.flush_signal = False
-
         self.exit = False
 
     # Transport data
@@ -72,8 +70,6 @@ class Simulator:
                 src.data, dst.data = None, src.data
                 if dst.name == "EX->[ROB]":
                     dst.data = self.load_store_unit.tick(dst.data).step()
-                if dst.name == "ROB->[IF]":
-                    self.flush_signal = True
                 src.update_status()
                 dst.update_status()
 
@@ -88,7 +84,7 @@ class Simulator:
 
         if self.ROB.step() is True:
             # Flush
-            return
+            return True
 
         self.EX.step()
 
@@ -100,9 +96,8 @@ class Simulator:
     def flush(self):
         print("-" * 10, " flush @ cycle:", self.cycle, "-" * 10)
 
-        self.flush_signal = False
         # Flush
-        self.IF.flush()
+        self.IF.flush(self.ROB.ports['output']['IF'].data)
         self.ID.flush()
         self.ROB.flush()
         self.EX.flush()
@@ -114,9 +109,9 @@ for test in rv64ui_p_tests:
 
     while cpu.exit is not True:
         cpu.tick()
-        if cpu.flush_signal is True:
+        if cpu.step() is True:
             cpu.flush()
-        cpu.step()
+
         cpu.cycle += 1
 
         if cpu.cycle > 1000:
