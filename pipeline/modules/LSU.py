@@ -32,7 +32,9 @@ class LSU(Module):
                 if "load_mem" in data:
                     for load_request in data["load_mem"]:
                         data["write_regs"]["int"][0]["value"] = self.memory.read_bytes(
-                            load_request["addr"], load_request["len"]
+                            load_request["addr"],
+                            load_request["len"],
+                            sign_extend=data["name"] in ["LB", "LH", "LW"],
                         )
 
                 if "store_mem" in data:

@@ -30,12 +30,21 @@ class Memory(Module):
         ) | (value << pos)
 
     # Handle read requesets from IF stage
-    def read_bytes(self, address, width):
+    def read_bytes(self, address, width, sign_extend=False):
         data = double_type(0)
         for i in range(width):
+            # TODO: replace with `|` operator?
             data = np.bitwise_or(
                 data,
                 double_type(self.read_byte(address + reg_type(i)) << reg_type(i * 8)),
+            )
+        if sign_extend is True:
+            sign = reg_type(data >> reg_type(width * 8 - 1)) & reg_type(0x1)
+            data = reg_type(data) | reg_type(
+                int(
+                    str(sign) * ((reg_type(0).itemsize - width) * 8) + "0" * width * 8,
+                    2,
+                )
             )
         return reg_type(data)
 

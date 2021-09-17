@@ -58,13 +58,22 @@ class Simulator:
 
     # Rust read_bytes() costs 1.09s
     # Python read_bytes() costs 0.0003s
-    def read_bytes(self, address, width):
+    def read_bytes(self, address, width, sign_extend=False):
         data = double_type(0)
         for i in range(width):
             data = np.bitwise_or(
                 data,
                 double_type(self.read_byte(address + reg_type(i)) << reg_type(i * 8)),
             )
+        if sign_extend is True:
+            sign = reg_type(data >> reg_type(width * 8 - 1)) & reg_type(0x1)
+            data = reg_type(data) | reg_type(
+                int(
+                    str(sign) * ((reg_type(0).itemsize - width) * 8) + "0" * width * 8,
+                    2,
+                )
+            )
+
         return reg_type(data)
 
     def read_byte(self, address):
@@ -162,7 +171,9 @@ def main(argv):
             if "load_mem" in execute_result:
                 for load_request in execute_result["load_mem"]:
                     execute_result["write_regs"]["int"][0]["value"] = cpu.read_bytes(
-                        load_request["addr"], load_request["len"]
+                        load_request["addr"],
+                        load_request["len"],
+                        sign_extend=execute_result["name"] in ["LB", "LH", "LW"],
                     )
 
             if "store_mem" in execute_result:
