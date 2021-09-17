@@ -14,6 +14,7 @@ import os
 import numpy as np
 import getopt
 
+
 class Simulator:
     def __init__(self, data):
         self.mem = data.memory.data
@@ -85,19 +86,20 @@ class Simulator:
             reg_type(self.mem[index]) & double_type(np.invert(reg_type(0xFF) << pos))
         ) | (value << pos)
 
+
 def main(argv):
 
     riscv_tests_index = 0
     DEBUG_PRINT = False
 
     try:
-        opts, args = getopt.getopt(argv,"hdi:",["index="])
+        opts, args = getopt.getopt(argv, "hdi:", ["index="])
     except getopt.GetoptError:
-        print ('prototype.py [-i <riscv_tests_index=0>] [-d]')
+        print("prototype.py [-i <riscv_tests_index=0>] [-d]")
         sys.exit(2)
     for opt, arg in opts:
-        if opt == '-h':
-            print('prototype.py [-i <riscv_tests_index=0>] [-d]')
+        if opt == "-h":
+            print("prototype.py [-i <riscv_tests_index=0>] [-d]")
             sys.exit()
         elif opt in ("-d", "--debug"):
             DEBUG_PRINT = True
@@ -119,7 +121,6 @@ def main(argv):
         for i in os.listdir(riscv_tests_path)
         if "rv64ui" in i and "-p-" in i and "dump" not in i
     ]
-
 
     for test in rv64ui_p_tests[riscv_tests_index:]:
         cpu = Simulator(load_elf(riscv_tests_path + test, 2049 * 1024 * 1024))
@@ -149,9 +150,9 @@ def main(argv):
 
             if DEBUG_PRINT:
                 print(
-                "{} {}".format(hex(decode_result["pc"]), decode_result["name"]),
-                decode_result,
-            )
+                    "{} {}".format(hex(decode_result["pc"]), decode_result["name"]),
+                    decode_result,
+                )
 
             # execute
             execute_result = getattr(instructions, decode_result["name"])(decode_result)
@@ -167,7 +168,9 @@ def main(argv):
             if "store_mem" in execute_result:
                 for store_request in execute_result["store_mem"]:
                     cpu.write_bytes(
-                        store_request["addr"], store_request["len"], store_request["value"]
+                        store_request["addr"],
+                        store_request["len"],
+                        store_request["value"],
                     )
 
             # write back
@@ -178,7 +181,7 @@ def main(argv):
                             register_type, write_reg["index"], write_reg["value"]
                         )
             if DEBUG_PRINT:
-                cpu.print_registers() 
+                cpu.print_registers()
 
             # branch
             if "next_pc" in execute_result:
@@ -193,9 +196,12 @@ def main(argv):
             if endcode == 1:
                 print("Test {} Passed".format(test))
             else:
-                print("Test {} Failed at test[{}]".format(test, endcode >> byte_type(1)))
+                print(
+                    "Test {} Failed at test[{}]".format(test, endcode >> byte_type(1))
+                )
 
             break
 
+
 if __name__ == "__main__":
-   main(sys.argv[1:])
+    main(sys.argv[1:])

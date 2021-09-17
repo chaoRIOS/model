@@ -567,21 +567,30 @@ def ADDIW(data):
 
 def SLLIW(data):
     data["write_regs"]["int"][0]["value"] = reg_type(
-        sext_word_type(data["read_regs"]["int"][0]["value"] << reg_type(data["imm"][0]))
+        sext_word_type(
+            word_type(data["read_regs"]["int"][0]["value"]) << reg_type(data["imm"][0])
+        )
     )
     return data
 
 
 def SRLIW(data):
     data["write_regs"]["int"][0]["value"] = reg_type(
-        sext_word_type(data["read_regs"]["int"][0]["value"] >> reg_type(data["imm"][0]))
+        sext_word_type(
+            word_type(data["read_regs"]["int"][0]["value"]) >> reg_type(data["imm"][0])
+        )
     )
     return data
 
 
 def SRAIW(data):
+    bit = word_type(data["read_regs"]["int"][0]["value"]) >> word_type(31)
+    shamt = word_type(data["imm"][0])
     data["write_regs"]["int"][0]["value"] = reg_type(
-        sext_word_type(data["read_regs"]["int"][0]["value"] >> reg_type(data["imm"][0]))
+        sext_word_type(
+            (word_type(data["read_regs"]["int"][0]["value"]) >> shamt)
+            | (word_type(int(str(bit) * shamt + "0" * (32 - shamt), 2)))
+        )
     )
     return data
 
@@ -607,7 +616,8 @@ def SUBW(data):
 def SLLW(data):
     data["write_regs"]["int"][0]["value"] = reg_type(
         sext_word_type(
-            data["read_regs"]["int"][0]["value"] << data["read_regs"]["int"][1]["value"]
+            word_type(data["read_regs"]["int"][0]["value"])
+            << (word_type(data["read_regs"]["int"][1]["value"]) & word_type(0x1F))
         )
     )
     return data
@@ -616,16 +626,20 @@ def SLLW(data):
 def SRLW(data):
     data["write_regs"]["int"][0]["value"] = reg_type(
         sext_word_type(
-            data["read_regs"]["int"][0]["value"] >> data["read_regs"]["int"][1]["value"]
+            word_type(data["read_regs"]["int"][0]["value"])
+            >> (word_type(data["read_regs"]["int"][1]["value"]) & word_type(0x1F))
         )
     )
     return data
 
 
 def SRAW(data):
+    bit = word_type(data["read_regs"]["int"][0]["value"]) >> word_type(31)
+    shamt = word_type(data["read_regs"]["int"][1]["value"]) & word_type(0x1F)
     data["write_regs"]["int"][0]["value"] = reg_type(
         sext_word_type(
-            data["read_regs"]["int"][0]["value"] ^ data["read_regs"]["int"][1]["value"]
+            (word_type(data["read_regs"]["int"][0]["value"]) >> shamt)
+            | word_type(int(str(bit) * shamt + "0" * (32 - shamt), 2))
         )
     )
     return data
@@ -643,7 +657,8 @@ def MULW(data):
 def DIVW(data):
     data["write_regs"]["int"][0]["value"] = reg_type(
         sext_word_type(
-            data["read_regs"]["int"][0]["value"] / data["read_regs"]["int"][1]["value"]
+            __binary_complement_w(word_type(data["read_regs"]["int"][0]["value"]))
+            / __binary_complement_w(word_type(data["read_regs"]["int"][1]["value"]))
         )
     )
     return data
@@ -652,7 +667,8 @@ def DIVW(data):
 def DIVUW(data):
     data["write_regs"]["int"][0]["value"] = reg_type(
         sext_word_type(
-            data["read_regs"]["int"][0]["value"] / data["read_regs"]["int"][1]["value"]
+            word_type(data["read_regs"]["int"][0]["value"])
+            / word_type(data["read_regs"]["int"][1]["value"])
         )
     )
     return data
@@ -661,7 +677,8 @@ def DIVUW(data):
 def REMW(data):
     data["write_regs"]["int"][0]["value"] = reg_type(
         sext_word_type(
-            data["read_regs"]["int"][0]["value"] % data["read_regs"]["int"][1]["value"]
+            __binary_complement_w(word_type(data["read_regs"]["int"][0]["value"]))
+            % __binary_complement_w(word_type(data["read_regs"]["int"][1]["value"]))
         )
     )
     return data
@@ -670,7 +687,8 @@ def REMW(data):
 def REMUW(data):
     data["write_regs"]["int"][0]["value"] = reg_type(
         sext_word_type(
-            data["read_regs"]["int"][0]["value"] % data["read_regs"]["int"][1]["value"]
+            word_type(data["read_regs"]["int"][0]["value"])
+            % data["read_regs"]["int"][1]["value"]
         )
     )
     return data
@@ -684,6 +702,14 @@ def __binary_complement(value):
         value
         if value >> reg_type(63) == 0
         else signed_reg_type(-(np.invert(value) + reg_type(1)))
+    )
+
+
+def __binary_complement_w(value):
+    return (
+        value
+        if value >> word_type(31) == 0
+        else signed_word_type(-(np.invert(value) + word_type(1)))
     )
 
 
