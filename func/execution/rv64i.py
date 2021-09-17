@@ -289,6 +289,7 @@ def SRLI(data):
     data["write_regs"]["int"][0]["value"] = reg_type(
         data["read_regs"]["int"][0]["value"] >> reg_type(data["imm"][0])
     )
+    return data
 
 
 def SRAI(data):
