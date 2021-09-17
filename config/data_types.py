@@ -7,6 +7,8 @@ double_type = np.uint64
 
 reg_type = np.uint64
 
+signed_reg_type = np.int64
+
 
 def sext_word_type(data):
     return word_type(data) | (

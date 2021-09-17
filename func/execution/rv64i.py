@@ -53,20 +53,9 @@ def BNE(data):
 
 
 def BLT(data):
-    # binary complement
-    lhs = (
-        (np.invert(data["read_regs"]["int"][0]["value"]) + 1)
-        if data["read_regs"]["int"][0]["value"] & reg_type(0x8000_0000_0000_0000)
-        == 0x8000_0000_0000_0000
-        else data["read_regs"]["int"][0]["value"]
-    )
-    rhs = (
-        (np.invert(data["read_regs"]["int"][1]["value"]) + 1)
-        if data["read_regs"]["int"][1]["value"] & reg_type(0x8000_0000_0000_0000)
-        == 0x8000_0000_0000_0000
-        else data["read_regs"]["int"][1]["value"]
-    )
-    if lhs < rhs:
+    if __binary_complement(data["read_regs"]["int"][0]["value"]) < __binary_complement(
+        data["read_regs"]["int"][1]["value"]
+    ):
         data["next_pc"] = reg_type(data["pc"] + reg_type(data["imm"][0]))
         data["taken"] = True
     else:
@@ -76,20 +65,9 @@ def BLT(data):
 
 
 def BGE(data):
-    # binary complement
-    lhs = (
-        (np.invert(data["read_regs"]["int"][0]["value"]) + 1)
-        if data["read_regs"]["int"][0]["value"] & reg_type(0x8000_0000_0000_0000)
-        == 0x8000_0000_0000_0000
-        else data["read_regs"]["int"][0]["value"]
-    )
-    rhs = (
-        (np.invert(data["read_regs"]["int"][1]["value"]) + 1)
-        if data["read_regs"]["int"][1]["value"] & reg_type(0x8000_0000_0000_0000)
-        == 0x8000_0000_0000_0000
-        else data["read_regs"]["int"][1]["value"]
-    )
-    if lhs >= rhs:
+    if __binary_complement(data["read_regs"]["int"][0]["value"]) >= __binary_complement(
+        data["read_regs"]["int"][1]["value"]
+    ):
         data["next_pc"] = reg_type(data["pc"] + reg_type(data["imm"][0]))
         data["taken"] = True
     else:
@@ -264,7 +242,9 @@ def ADDI(data):
 
 def SLTI(data):
     data["write_regs"]["int"][0]["value"] = reg_type(
-        1 if data["read_regs"]["int"][0]["value"] < data["imm"][0] else 0
+        1
+        if __binary_complement(data["read_regs"]["int"][0]["value"]) < data["imm"][0]
+        else 0
     )
     return data
 
@@ -693,6 +673,17 @@ def REMUW(data):
         )
     )
     return data
+
+
+# =============================================================
+
+
+def __binary_complement(value):
+    return (
+        value
+        if value >> reg_type(63) == 0
+        else signed_reg_type(-(np.invert(value) + reg_type(1)))
+    )
 
 
 # =============================================================
