@@ -14,21 +14,18 @@ function_unit_numbers = [
         "ALU": 1,
         "MUL": 4,
         "DIV": 4,
-        
         "AGU": 1,
     },
     {
         "ALU": 1,
         "MUL": 4,
         "DIV": 4,
-
         "AGU": 1,
     },
     {
         "ALU": 1,
         "MUL": 4,
         "DIV": 4,
-
         "BR": 1,
     },
 ]
@@ -38,7 +35,9 @@ def new_function_units(with_data=False):
     total_function_units = []
     for i in range(len(function_unit_numbers)):
         function_units = {}
-        for function_unit_type, function_unit_number in function_unit_numbers[i].items():
+        for function_unit_type, function_unit_number in function_unit_numbers[
+            i
+        ].items():
             function_units[function_unit_type] = (
                 [{"latency": 0, "data": None} for i in range(function_unit_number)]
                 if (with_data is True)

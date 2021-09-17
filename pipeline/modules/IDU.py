@@ -16,7 +16,7 @@ class IDU(Module):
         }
 
     def step(self):
-        if self.ports["input"]["IF"].valid:
+        if self.ports["input"]["IF"].valid and self.ports["output"]["ROB"].ready:
             self.ports["output"]["ROB"].data = self.op(self.ports["input"]["IF"].data)
             self.ports["input"]["IF"].data = None
             self.ports["input"]["IF"].update_status()

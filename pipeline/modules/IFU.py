@@ -25,13 +25,14 @@ class IFU(Module):
             self.ports["input"]["ROB"].data = None
             self.ports["input"]["ROB"].update_status()
 
-        self.ports["output"]["ID"].data = []
-        for i in range(self.issue_number):
-            self.pc = self.fetch_pc
-            data = self.op()
-            self.fetch_pc += reg_type(4)
-            self.ports["output"]["ID"].data.append(data)
-        self.ports["output"]["ID"].update_status()
+        if self.ports["output"]["ID"].ready:
+            self.ports["output"]["ID"].data = []
+            for i in range(self.issue_number):
+                self.pc = self.fetch_pc
+                data = self.op()
+                self.fetch_pc += reg_type(4)
+                self.ports["output"]["ID"].data.append(data)
+            self.ports["output"]["ID"].update_status()
 
     def op(self):
         return {
@@ -40,10 +41,10 @@ class IFU(Module):
         }
 
     def flush(self, data):
-        # Hold input port
-        self.ports['input']['ROB'].data = data
-        self.ports['input']['ROB'].update_status()
-        self.step()
-
         self.ports["output"]["ID"].data = None
         self.ports["output"]["ID"].update_status()
+
+        # Hold input port
+        self.ports["input"]["ROB"].data = data
+        self.ports["input"]["ROB"].update_status()
+        self.step()

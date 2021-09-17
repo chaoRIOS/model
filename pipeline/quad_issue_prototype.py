@@ -97,7 +97,7 @@ class Simulator:
         print("-" * 10, " flush @ cycle:", self.cycle, "-" * 10)
 
         # Flush
-        self.IF.flush(self.ROB.ports['output']['IF'].data)
+        self.IF.flush(self.ROB.ports["output"]["IF"].data)
         self.ID.flush()
         self.ROB.flush()
         self.EX.flush()
@@ -114,7 +114,7 @@ for test in rv64ui_p_tests:
 
         cpu.cycle += 1
 
-        if cpu.cycle > 1000:
+        if cpu.cycle > 300:
             cpu.exit = True
 
         # TODO: for riscv-test isa test only

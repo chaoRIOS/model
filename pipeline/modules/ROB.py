@@ -132,6 +132,7 @@ class reorder_buffer(Module):
         self.entries = [self.ROBEntry() for i in range(self.size)]
         self.free_entry_index = deque(range(size), size)
         self.busy_entry_index = deque([], size)
+        self.inflight_entry_index = deque([], size)
 
         self.ports = {
             "input": {"ID": Port("ID->[ROB]"), "EX": Port("EX->[ROB]")},
@@ -173,11 +174,24 @@ class reorder_buffer(Module):
         self.entries[index].fill_with(data)
 
     # Function unit status methods
-    def function_unit_ready(self, opcode, issue_queue_index, latency=1):
+    def function_unit_ready(
+        self, opcode, issue_queue_index, entry_in_queue_index, latency=1
+    ):
         # TODO: add opcode >> FU_type mapping
         if (opcode is not None) and (opcode != "ILLEGAL"):
             function_unit_type = function_unit_types[opcode]
-            # CSR FU is also dispatched in odinary way
+            # CSR should be issued in-order
+            if function_unit_type == "CSR":
+                # Halt if any preceding CSR instructions havn't been issued yet
+                for i in range(entry_in_queue_index):
+                    if (
+                        function_unit_types[
+                            self.entries[self.issue_queues[issue_queue_index][i]].opcode
+                        ]
+                        == "CSR"
+                    ):
+                        return None, None
+
             for function_unit_index, function_unit in enumerate(
                 self.function_unit_status[issue_queue_index][function_unit_type]
             ):
@@ -203,8 +217,6 @@ class reorder_buffer(Module):
     # Processing internal ROB status
     def step(self):
 
-        print(self.busy_entry_index)
-
         self.write_back()
 
         if self.commit() is True:
@@ -213,9 +225,19 @@ class reorder_buffer(Module):
 
         self.allocate()
 
+        print("Busy:{}".format(len(self.busy_entry_index)), self.busy_entry_index)
+        print(
+            "Inflight:{}".format(len(self.inflight_entry_index)),
+            self.inflight_entry_index,
+        )
+
         self.wake_up()
 
         self.issue()
+        print(
+            "Inflight:{}".format(len(self.inflight_entry_index)),
+            self.inflight_entry_index,
+        )
 
         self.tick_function_unit_status()
 
@@ -307,11 +329,26 @@ class reorder_buffer(Module):
                 max_issue_number = 2
                 # Add issue window size limit
                 issue_window = 8
-                for entry_index in list(issue_queue)[0:issue_window]:
+                print(
+                    "Issue from queue[{}]: {}".format(
+                        issue_queue_index, list(issue_queue)[0:issue_window]
+                    )
+                )
+                for entry_in_queue_index, entry_index in enumerate(
+                    list(issue_queue)[0:issue_window]
+                ):
                     if issue_number >= max_issue_number:
+                        print(
+                            "Issue queue[{}] met max issue number".format(
+                                issue_queue_index
+                            )
+                        )
                         break
 
                     # Check entries ready for issue
+                    # ex == False
+                    # regster ready
+                    # inflight == False
                     if (
                         (self.entries[entry_index].ex is False)
                         and (self.entries[entry_index].is_ready())
@@ -322,13 +359,17 @@ class reorder_buffer(Module):
                             function_unit_index,
                             function_unit_type,
                         ) = self.function_unit_ready(
-                            self.entries[entry_index].opcode, issue_queue_index
+                            self.entries[entry_index].opcode,
+                            issue_queue_index,
+                            entry_in_queue_index,
                         )
                         if function_unit_index is not None:
                             print(
                                 "issueing:[{}] from queue[{}]".format(
                                     entry_index, issue_queue_index
                                 ),
+                                hex(self.entries[entry_index].data["pc"]),
+                                self.entries[entry_index].data["name"],
                                 self.entries[entry_index],
                             )
                             # Add FU info
@@ -363,12 +404,24 @@ class reorder_buffer(Module):
                             )
 
                             # Dequeue
-                            issue_queue.popleft()
+                            # Note: mustn't use popleft because of out-of-order issueing
+                            issue_queue.remove(entry_index)
 
                             self.entries[entry_index].inflight = True
 
+                            # Mark as inflight
+                            self.inflight_entry_index.append(entry_index)
+
                             issue_number += 1
                             total_issue_number += 1
+                        else:
+                            print(
+                                "Cant issue[{}] from queue[{}] because FU not ready".format(
+                                    entry_index, issue_queue_index
+                                ),
+                                hex(self.entries[entry_index].data["pc"]),
+                                self.entries[entry_index].data["name"],
+                            )
                     else:
                         print(
                             "Cant issue[{}] from queue[{}] because".format(
@@ -377,11 +430,15 @@ class reorder_buffer(Module):
                             end=" ",
                         )
                         if not (self.entries[entry_index].ex is False):
-                            print("executed")
+                            print("executed", end=" ")
                         elif not (self.entries[entry_index].is_ready()):
-                            print("register not ready")
+                            print("register not ready", end=" ")
                         elif not (self.entries[entry_index].inflight is False):
-                            print("inflight")
+                            print("inflight", end=" ")
+                        print(
+                            hex(self.entries[entry_index].data["pc"]),
+                            self.entries[entry_index].data["name"],
+                        )
 
             print("total_issue_number", total_issue_number)
             if total_issue_number > 0:
@@ -486,7 +543,9 @@ class reorder_buffer(Module):
                 # Note: CSR status should be updated on committing
                 # last inflight CSR instruction
                 if function_unit_type != "CSR":
-                    for function_unit in issue_queue_function_unit_status[function_unit_type]:
+                    for function_unit in issue_queue_function_unit_status[
+                        function_unit_type
+                    ]:
                         # Decrement
                         function_unit["latency"] = max(function_unit["latency"] - 1, 0)
 
@@ -499,7 +558,10 @@ class reorder_buffer(Module):
             issue_queue_index
             for issue_queue_index in range(self.issue_queue_num)
             if (function_unit_type in self.function_unit_status[issue_queue_index])
-            and (len(self.issue_queues[issue_queue_index]) < self.issue_queues[issue_queue_index].maxlen)
+            and (
+                len(self.issue_queues[issue_queue_index])
+                < self.issue_queues[issue_queue_index].maxlen
+            )
         ]
 
         if len(candidate_queue) == 0:
@@ -616,7 +678,12 @@ class reorder_buffer(Module):
                 # fill ROB entry
                 self.fill_entry(data, entry_index)
 
-                print("ROB[{}]".format(entry_index), self.entries[entry_index])
+                print(
+                    "ROB[{}] Q[{}]".format(entry_index, self.get_issue_queue_id(data)),
+                    hex(self.entries[entry_index].data["pc"]),
+                    self.entries[entry_index].data["name"],
+                    self.entries[entry_index],
+                )
 
                 # enqueue this entry
                 self.issue_queues[self.get_issue_queue_id(data)].append(entry_index)
@@ -637,7 +704,13 @@ class reorder_buffer(Module):
             for i, data in enumerate(queue_data):
                 entry_index = data["ROB_entry"]
                 self.entries[entry_index].data = data
-                print("writing back[{}]".format(entry_index), self.entries[entry_index])
+                print(
+                    "writing back:[{}]".format(entry_index),
+                    hex(self.entries[entry_index].data["pc"]),
+                    self.entries[entry_index].data["name"],
+                    self.entries[entry_index],
+                )
+                self.inflight_entry_index.remove(entry_index)
                 # # FU_status
                 # self.function_unit_status[data['function_unit_type']][data['function_unit_index']]['latency'] = None
                 # print("EX->[ROB]: Status update:", self.function_unit_status)
@@ -710,6 +783,7 @@ class reorder_buffer(Module):
         self.issue_queues = [
             deque(maxlen=self.issue_queue_size) for i in range(self.issue_queue_num)
         ]
+        self.inflight_entry_index = deque([], maxlen=self.size)
         return super().flush()
 
 
