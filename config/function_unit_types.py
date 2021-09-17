@@ -76,4 +76,6 @@ function_unit_types = {
     "DIVUW": "ALU",
     "REMW": "ALU",
     "REMUW": "ALU",
+
+    "ILLEGAL": None,
 }
