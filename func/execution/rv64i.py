@@ -315,7 +315,8 @@ def SUB(data):
 
 def SLL(data):
     data["write_regs"]["int"][0]["value"] = reg_type(
-        data["read_regs"]["int"][0]["value"] << data["read_regs"]["int"][1]["value"]
+        data["read_regs"]["int"][0]["value"]
+        << (reg_type(data["read_regs"]["int"][1]["value"]) & reg_type(0x3F))
     )
     return data
 
