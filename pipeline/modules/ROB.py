@@ -182,14 +182,14 @@ class reorder_buffer(Module):
         if (opcode is not None) and (opcode != "ILLEGAL"):
             function_unit_type = function_unit_types[opcode]
             # CSR should be issued in-order
-            if function_unit_type == "CSR":
+            if function_unit_type in ["CSR", "AGU"]:
                 # Halt if any preceding CSR instructions havn't been issued yet
                 for i in range(entry_in_queue_index):
                     if (
                         function_unit_types[
                             self.entries[self.issue_queues[issue_queue_index][i]].opcode
                         ]
-                        == "CSR"
+                        == function_unit_type
                     ):
                         return None, None
 
