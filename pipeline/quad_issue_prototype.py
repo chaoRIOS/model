@@ -3,7 +3,7 @@
 import sys
 import os
 import numpy as np
-from numpy.lib.arraysetops import isin
+import getopt
 
 sys.path.append("..")
 
@@ -12,24 +12,6 @@ from config.register_name import register_name
 from utils.elf_parser import load_elf
 
 from modules import *
-
-np.set_printoptions(formatter={"int": hex})
-
-
-riscv_tests_path = (
-    os.path.expanduser("~") + "/work/riscv-tests/build/share/riscv-tests/isa/"
-)
-# Target Environment Name	Description
-# p                         virtual memory is disabled, only core 0 boots up
-# pm	                    virtual memory is disabled, all cores boot up
-# pt	                    virtual memory is disabled, timer interrupt fires every 100 cycles
-# v	                        virtual memory is enabled
-rv64ui_p_tests = [
-    i
-    for i in os.listdir(riscv_tests_path)
-    if "rv64ui" in i and "-p-" in i and "dump" not in i
-]
-
 
 class Simulator:
     def __init__(self, data):
@@ -58,7 +40,8 @@ class Simulator:
     # Transport data
     def tick(self):
         # debug logging
-        print("-" * 10, "tick @ cycle:", self.cycle, "-" * 10)
+        if DEBUG_PRINT:
+            print("-" * 10, "tick @ cycle:", self.cycle, "-" * 10)
 
         for linkage in self.linkages:
             src, dst = linkage.split("->")
@@ -75,7 +58,8 @@ class Simulator:
 
     # Updata internal status
     def step(self):
-        print("-" * 10, " step @ cycle:", self.cycle, "-" * 10)
+        if DEBUG_PRINT:
+            print("-" * 10, " step @ cycle:", self.cycle, "-" * 10)
 
         # 1) Implictly access memory
         self.IF.step()
@@ -94,7 +78,8 @@ class Simulator:
         # self.reg.print_registers()
 
     def flush(self):
-        print("-" * 10, " flush @ cycle:", self.cycle, "-" * 10)
+        if DEBUG_PRINT:
+            print("-" * 10, " flush @ cycle:", self.cycle, "-" * 10)
 
         # Flush
         self.IF.flush(self.ROB.ports["output"]["IF"].data)
@@ -104,29 +89,66 @@ class Simulator:
         self.load_store_unit.flush()
 
 
-for test in rv64ui_p_tests:
-    cpu = Simulator(load_elf(riscv_tests_path + test, 2049 * 1024 * 1024))
+DEBUG_PRINT = True
+def main(argv):
 
-    while cpu.exit is not True:
-        cpu.tick()
-        if cpu.step() is True:
-            cpu.flush()
+    riscv_tests_index = 0
 
-        cpu.cycle += 1
+    try:
+        opts, args = getopt.getopt(argv, "hdi:", ["index="])
+    except getopt.GetoptError:
+        print("prototype.py [-i <riscv_tests_index=0>] [-d]")
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == "-h":
+            print("prototype.py [-i <riscv_tests_index=0>] [-d]")
+            sys.exit()
+        elif opt in ("-d", "--debug"):
+            DEBUG_PRINT = True
+        elif opt in ("-i", "--index"):
+            riscv_tests_index = int(arg)
 
-        if cpu.cycle > 300:
-            cpu.exit = True
+    np.set_printoptions(formatter={"int": hex})
 
-        # TODO: for riscv-test isa test only
-        endcode = cpu.memory.read_byte(cpu.tohost_addr)
-        if endcode != 0:
-            print("cycles = {}".format(cpu.cycle))
-            if endcode == 1:
-                print("Test {} Passed".format(test))
-            else:
-                print(
-                    "Test {} Failed at test[{}]".format(test, endcode >> byte_type(1))
-                )
 
-            break
-    break
+    riscv_tests_path = (
+        os.path.expanduser("~") + "/work/riscv-tests/build/share/riscv-tests/isa/"
+    )
+    # Target Environment Name	Description
+    # p                         virtual memory is disabled, only core 0 boots up
+    # pm	                    virtual memory is disabled, all cores boot up
+    # pt	                    virtual memory is disabled, timer interrupt fires every 100 cycles
+    # v	                        virtual memory is enabled
+    rv64ui_p_tests = [
+        i
+        for i in os.listdir(riscv_tests_path)
+        if "rv64ui" in i and "-p-" in i and "dump" not in i
+    ]
+
+
+    for test in rv64ui_p_tests[riscv_tests_index:]:
+        cpu = Simulator(load_elf(riscv_tests_path + test, 2049 * 1024 * 1024))
+
+        while cpu.exit is not True:
+            cpu.tick()
+            if cpu.step() is True:
+                cpu.flush()
+
+            cpu.cycle += 1
+
+            # TODO: for riscv-test isa test only
+            endcode = cpu.memory.read_byte(cpu.tohost_addr)
+            if endcode != 0:
+                print("cycles = {}".format(cpu.cycle))
+                if endcode == 1:
+                    print("Test {} Passed".format(test))
+                else:
+                    print(
+                        "Test {} Failed at test[{}]".format(test, endcode >> byte_type(1))
+                    )
+
+                break
+        break
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

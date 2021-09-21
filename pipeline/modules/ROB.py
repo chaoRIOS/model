@@ -13,6 +13,7 @@ from config.function_unit_types import function_unit_types
 from module_base import Module, Port
 from . import FU
 
+DEBUG_PRINT = True
 
 class reorder_buffer(Module):
 
@@ -225,8 +226,10 @@ class reorder_buffer(Module):
 
         self.allocate()
 
-        print("Busy:{}".format(len(self.busy_entry_index)), self.busy_entry_index)
-        print(
+        if DEBUG_PRINT:
+            print("Busy:{}".format(len(self.busy_entry_index)), self.busy_entry_index)
+        if DEBUG_PRINT:
+            print(
             "Inflight:{}".format(len(self.inflight_entry_index)),
             self.inflight_entry_index,
         )
@@ -234,7 +237,8 @@ class reorder_buffer(Module):
         self.wake_up()
 
         self.issue()
-        print(
+        if DEBUG_PRINT:
+            print(
             "Inflight:{}".format(len(self.inflight_entry_index)),
             self.inflight_entry_index,
         )
@@ -329,7 +333,8 @@ class reorder_buffer(Module):
                 max_issue_number = 2
                 # Add issue window size limit
                 issue_window = 8
-                print(
+                if DEBUG_PRINT:
+                    print(
                     "Issue from queue[{}]: {}".format(
                         issue_queue_index, list(issue_queue)[0:issue_window]
                     )
@@ -338,7 +343,8 @@ class reorder_buffer(Module):
                     list(issue_queue)[0:issue_window]
                 ):
                     if issue_number >= max_issue_number:
-                        print(
+                        if DEBUG_PRINT:
+                            print(
                             "Issue queue[{}] met max issue number".format(
                                 issue_queue_index
                             )
@@ -364,7 +370,8 @@ class reorder_buffer(Module):
                             entry_in_queue_index,
                         )
                         if function_unit_index is not None:
-                            print(
+                            if DEBUG_PRINT:
+                                print(
                                 "issueing:[{}] from queue[{}]".format(
                                     entry_index, issue_queue_index
                                 ),
@@ -415,7 +422,8 @@ class reorder_buffer(Module):
                             issue_number += 1
                             total_issue_number += 1
                         else:
-                            print(
+                            if DEBUG_PRINT:
+                                print(
                                 "Cant issue[{}] from queue[{}] because FU not ready".format(
                                     entry_index, issue_queue_index
                                 ),
@@ -423,24 +431,30 @@ class reorder_buffer(Module):
                                 self.entries[entry_index].data["name"],
                             )
                     else:
-                        print(
+                        if DEBUG_PRINT:
+                            print(
                             "Cant issue[{}] from queue[{}] because".format(
                                 entry_index, issue_queue_index
                             ),
                             end=" ",
                         )
                         if not (self.entries[entry_index].ex is False):
-                            print("executed", end=" ")
+                            if DEBUG_PRINT:
+                                print("executed", end=" ")
                         elif not (self.entries[entry_index].is_ready()):
-                            print("register not ready", end=" ")
+                            if DEBUG_PRINT:
+                                print("register not ready", end=" ")
                         elif not (self.entries[entry_index].inflight is False):
-                            print("inflight", end=" ")
-                        print(
+                            if DEBUG_PRINT:
+                                print("inflight", end=" ")
+                        if DEBUG_PRINT:
+                                print(
                             hex(self.entries[entry_index].data["pc"]),
                             self.entries[entry_index].data["name"],
                         )
 
-            print("total_issue_number", total_issue_number)
+            if DEBUG_PRINT:
+                print("total_issue_number", total_issue_number)
             if total_issue_number > 0:
                 self.ports["output"]["EX"].update_status()
 
@@ -454,7 +468,8 @@ class reorder_buffer(Module):
             for i in range(self.issue_number):
                 entry = self.entries[self.busy_entry_index[0]]
                 if entry.is_complete():
-                    print(
+                    if DEBUG_PRINT:
+                        print(
                         "committing:[{}]".format(self.busy_entry_index[0]),
                         hex(entry.data["pc"]),
                         entry.data["name"],
@@ -678,7 +693,8 @@ class reorder_buffer(Module):
                 # fill ROB entry
                 self.fill_entry(data, entry_index)
 
-                print(
+                if DEBUG_PRINT:
+                        print(
                     "ROB[{}] Q[{}]".format(entry_index, self.get_issue_queue_id(data)),
                     hex(self.entries[entry_index].data["pc"]),
                     self.entries[entry_index].data["name"],
@@ -704,7 +720,8 @@ class reorder_buffer(Module):
             for i, data in enumerate(queue_data):
                 entry_index = data["ROB_entry"]
                 self.entries[entry_index].data = data
-                print(
+                if DEBUG_PRINT:
+                    print(
                     "writing back:[{}]".format(entry_index),
                     hex(self.entries[entry_index].data["pc"]),
                     self.entries[entry_index].data["name"],
@@ -713,7 +730,8 @@ class reorder_buffer(Module):
                 self.inflight_entry_index.remove(entry_index)
                 # # FU_status
                 # self.function_unit_status[data['function_unit_type']][data['function_unit_index']]['latency'] = None
-                # print("EX->[ROB]: Status update:", self.function_unit_status)
+                # if DEBUG_PRINT:
+                #     print("EX->[ROB]: Status update:", self.function_unit_status)
 
                 # update physical register
                 # Note: freelist are not updated yet (on committing)

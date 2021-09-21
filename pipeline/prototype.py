@@ -211,7 +211,7 @@ def main(argv):
                     "Test {} Failed at test[{}]".format(test, endcode >> byte_type(1))
                 )
 
-            break
+        # break
 
 
 if __name__ == "__main__":

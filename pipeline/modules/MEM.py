@@ -5,6 +5,7 @@ from config.data_types import *
 from config.register_name import register_name
 from module_base import Module
 
+DEBUG_PRINT = False
 
 class Memory(Module):
     def __init__(self, mem) -> None:
@@ -12,11 +13,12 @@ class Memory(Module):
         self.mem = mem
 
     def write_bytes(self, address, width, value):
-        print(
-            "[LSU] writing {} of {} byte(s) to {}".format(
-                hex(value), width, hex(address)
+        if DEBUG_PRINT:
+            print(
+                "[LSU] writing {} of {} byte(s) to {}".format(
+                    hex(value), width, hex(address)
+                )
             )
-        )
         for i in range(width):
             self.write_byte(
                 address + reg_type(i), (value >> reg_type(i * 8)) & reg_type(0xFF)
@@ -31,6 +33,12 @@ class Memory(Module):
 
     # Handle read requesets from IF stage
     def read_bytes(self, address, width, sign_extend=False):
+        if DEBUG_PRINT:
+            print(
+                "[LSU] reading {} byte(s) from {}".format(
+                    width, hex(address)
+                )
+            )
         data = double_type(0)
         for i in range(width):
             # TODO: replace with `|` operator?
