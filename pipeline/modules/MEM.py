@@ -1,11 +1,11 @@
 from collections import deque
+import os
 import numpy as np
 
 from config.data_types import *
 from config.register_name import register_name
 from module_base import Module
 
-DEBUG_PRINT = False
 
 class Memory(Module):
     def __init__(self, mem) -> None:
@@ -13,7 +13,7 @@ class Memory(Module):
         self.mem = mem
 
     def write_bytes(self, address, width, value):
-        if DEBUG_PRINT:
+        if os.environ.get('DEBUG_PRINT') is not None:
             print(
                 "[LSU] writing {} of {} byte(s) to {}".format(
                     hex(value), width, hex(address)
@@ -33,7 +33,7 @@ class Memory(Module):
 
     # Handle read requesets from IF stage
     def read_bytes(self, address, width, sign_extend=False):
-        if DEBUG_PRINT:
+        if os.environ.get('DEBUG_PRINT') is not None:
             print(
                 "[LSU] reading {} byte(s) from {}".format(
                     width, hex(address)

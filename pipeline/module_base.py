@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import sys
+import os
 
 from numpy.lib.arraysetops import isin
 
@@ -65,7 +66,8 @@ class Port:
         self.valid = self.data is not None
         self.ready = self.data is None
 
-        self.print()
+        if os.environ.get('DEBUG_PRINT') is not None:
+            self.print()
 
     def print(self):
         print("{}: [valid:{} ready:{}]".format(self.name, self.valid, self.ready))

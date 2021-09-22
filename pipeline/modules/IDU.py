@@ -28,8 +28,13 @@ class IDU(Module):
         results = []
         for data in port_data:
             inst = decode_word(data["word"])
+            # TODO: Handle decoding error
+            if 'decode_error' in inst:
+                break
             inst["pc"] = data["pc"]
             inst["insn_code"] = hex(data["word"])
             inst["insn_len"] = 4
             results.append(inst)
+        if results == []:
+            results = None
         return results

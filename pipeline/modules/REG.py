@@ -1,5 +1,6 @@
 from collections import deque
 import numpy as np
+import os
 
 from config.data_types import *
 from config.register_name import register_name
@@ -14,7 +15,6 @@ from module_base import Module
 # 4) register file
 # 5) non-renaming CSR file
 
-DEBUG_PRINT = False
 class PhysicalRegisterFile(Module):
     def __init__(self, size) -> None:
         self.rename_table = {reg: None for reg in register_name}
@@ -77,7 +77,7 @@ class PhysicalRegisterFile(Module):
         self.rename_table[register_name[arch_index]] = phy_index
 
     def read_physical_register(self, index):
-        if DEBUG_PRINT:
+        if os.environ.get('DEBUG_PRINT') is not None:
             print("reading phy_reg[{}]".format(str(index)))
         if index is None:
             return None
@@ -97,12 +97,12 @@ class PhysicalRegisterFile(Module):
             )
 
     def read_csr(self, index):
-        if DEBUG_PRINT:
+        if os.environ.get('DEBUG_PRINT') is not None:
             print("[CSR] read [{}] -> {}".format(index, hex(self.csr[index])))
         return self.csr[index]
 
     def write_csr(self, index, value):
-        if DEBUG_PRINT:
+        if os.environ.get('DEBUG_PRINT') is not None:
             print("[CSR] write [{}] <- {}".format(index, hex(value)))
         self.csr[index] = reg_type(value)
 
