@@ -47,9 +47,10 @@ pub fn instruction_length(i: u16) -> usize {
 /// Decode the given instruction.
 pub fn decode(i: u32) -> DecodingResult {
     match i & 0b11 {
-        0b00 => compressed::decode_q00(i),
-        0b01 => compressed::decode_q01(i),
-        0b10 => compressed::decode_q10(i),
+        // 0b00 => compressed::decode_q00(i),
+        // 0b01 => compressed::decode_q01(i),
+        // 0b10 => compressed::decode_q10(i),
+        0b00 | 0b01 | 0b10 => decode(compressed::uncompress(i)),
         0b11 => match (i >> 2) & 0b11111 {
             0b00000 => decode_load(i),
             0b00001 => Err(DecodingError::Unimplemented), // Load-FP
