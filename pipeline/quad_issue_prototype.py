@@ -42,7 +42,11 @@ class Simulator:
         # debug logging
         if DEBUG_PRINT:
             print("-" * 10, "tick @ cycle:", self.cycle, "-" * 10)
+        
+        # update MCYCLE
+        self.reg.write_csr(0xb00, reg_type(self.cycle))
 
+        # Propagation
         for linkage in self.linkages:
             src, dst = linkage.split("->")
             src, dst = (
@@ -90,7 +94,7 @@ class Simulator:
 
 
 DEBUG_PRINT = os.environ.get('DEBUG_PRINT') is not None
-IS_RISCV_TEST = True
+IS_RISCV_TEST = False
 def main(argv):
     global DEBUG_PRINT
     riscv_tests_index = 0
@@ -132,15 +136,15 @@ def main(argv):
     )
 
     benchmarks = [
-        benchmarks_path + i
+        i
         for i in os.listdir(riscv_tests_path)
         if "rv64ui" in i and "-p-" in i and "dump" not in i
     ]
 
 
-    # for test in [benchmarks_path + "dhrystone.riscv"]:
-    for test in rv64ui_p_tests[riscv_tests_index:]:
-        cpu = Simulator(load_elf(riscv_tests_path + test, 2049 * 1024 * 1024))
+    for test in [benchmarks_path + "dhrystone.riscv"]:
+    # for test in rv64ui_p_tests[riscv_tests_index:]:
+        cpu = Simulator(load_elf(test, 2049 * 1024 * 1024))
 
         while cpu.exit is not True:
             cpu.tick()
@@ -165,8 +169,11 @@ def main(argv):
 
                     break
             else:
-                tohost_data = cpu.memory.read_byte(cpu.tohost_addr)
+                tohost_data = cpu.memory.read_bytes(cpu.tohost_addr,4)
                 if tohost_data != 0:
+                    if tohost_data & reg_type(0x1) == reg_type(0x1):
+                        print("cycles = {}".format(cpu.cycle))
+                        break
                     if tohost_data >= 0x80000000: 
                         # Address of tohost data
                         flag1 = cpu.memory.read_bytes(24 + tohost_data, 4)
@@ -177,11 +184,10 @@ def main(argv):
                             length = cpu.memory.read_bytes(6 * 4 + tohost_data, 4)
                             for i in range(length):
                                 # TODO: decode
-                                char = cpu.memory.read_bytes(i * base, 1)
-                                print(char, end=' ')
-                            print("cycles = {}".format(cpu.cycle))
-                            print("{}".format(hex(tohost_data)))
-                            break
+                                char = cpu.memory.read_bytes(i + base, 1)
+                                print(chr(char), end='')
+                            cpu.memory.write_bytes(reg_type(cpu.tohost_addr + 0x40), 4, reg_type(1))
+                            cpu.memory.write_bytes(reg_type(cpu.tohost_addr), 4, reg_type(0))
 
 
         break
