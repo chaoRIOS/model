@@ -33,7 +33,7 @@ class IDU(Module):
                 break
             inst["pc"] = data["pc"]
             inst["insn_code"] = hex(data["word"])
-            inst["insn_len"] = 4
+            inst["insn_len"] = 2 if data['is_compressed'] else 4
             results.append(inst)
         if results == []:
             results = None

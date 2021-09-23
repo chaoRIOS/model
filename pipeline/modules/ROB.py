@@ -123,6 +123,8 @@ class reorder_buffer(Module):
         self,
         size,
         physical_register_file,
+        # temp
+        lsu,
         issue_number,
         issue_queue_num=4,
         issue_queue_size=8,
@@ -150,6 +152,9 @@ class reorder_buffer(Module):
 
         # Unified physical register file
         self.physical_register_file = physical_register_file
+
+        # LSU
+        self.lsu = lsu
 
         # Configurable issue number
         self.issue_number = issue_number
@@ -484,6 +489,42 @@ class reorder_buffer(Module):
                                         write_reg["index"],
                                         reg_type(write_reg["value"]),
                                     )
+                        
+                    # Load/Store controlling logic
+                    if (
+                        data['name']
+                        in [
+                            "LB",
+                            "LH",
+                            "LW",
+                            "LBU",
+                            "LHU",
+                            "LWU",
+                            "LD"
+                        ]
+                    ):
+                        data = self.lsu.tick(data).step()
+                        # GPR
+                        if "int" in data["write_regs"]:
+                            for write_reg in data["write_regs"]["int"]:
+                                if ("value" in write_reg) and (
+                                    write_reg["index"] is not None
+                                ):
+                                    self.physical_register_file.write_physical_register(
+                                        self.entries[data['ROB_entry']].PRd,
+                                        reg_type(write_reg["value"]),
+                                    )
+                    elif (
+                        data['name']
+                        in [
+                            "SB",
+                            "SH",
+                            "SW",
+                            "SD"
+                        ]
+                    ):
+                        data = self.lsu.tick(data).step()
+
 
                     # deallocate LPRD
                     self.physical_register_file.deallocate_register(entry.LPRd)
@@ -734,8 +775,12 @@ class reorder_buffer(Module):
 
                 # update physical register
                 # Note: freelist are not updated yet (on committing)
-                if "write_regs" in data:
-                    # 1) write PRD register
+
+                # Special strategy for ld instructions
+                if function_unit_types[data["name"]] == "AGU":
+                    pass
+                elif "write_regs" in data:
+                    # write PRD register
                     # CSR
 
                     # Note: CSR should be written on commiting
@@ -749,38 +794,6 @@ class reorder_buffer(Module):
                                 self.physical_register_file.write_physical_register(
                                     self.entries[entry_index].PRd,
                                     reg_type(write_reg["value"]),
-                                )
-
-                    # Note: This step should be taken on committing
-                    # # 2) deallocate LPRD
-                    # self.physical_register_file.freelist.append(self.entries[index].LPRd)
-
-                    # 3) update entries with dependent PRSx
-                    if self.entries[entry_index].PRd is not None:
-                        for i in self.busy_entry_index:
-                            if i == entry_index:
-                                continue
-
-                            if (
-                                self.entries[i].PRS1 == self.entries[entry_index].PRd
-                            ) and (self.entries[i].p1 is False):
-                                self.entries[i].p1 = True
-                                self.entries[i].data["read_regs"]["int"][0]["p"] = True
-                                self.entries[i].data["read_regs"]["int"][0][
-                                    "value"
-                                ] = self.physical_register_file.read_physical_register(
-                                    self.entries[i].PRS1
-                                )
-
-                            if (
-                                self.entries[i].PRS2 == self.entries[entry_index].PRd
-                            ) and (self.entries[i].p2 is False):
-                                self.entries[i].p2 = True
-                                self.entries[i].data["read_regs"]["int"][1]["p"] = True
-                                self.entries[i].data["read_regs"]["int"][1][
-                                    "value"
-                                ] = self.physical_register_file.read_physical_register(
-                                    self.entries[i].PRS2
                                 )
 
                 # Mark entry as post-EX

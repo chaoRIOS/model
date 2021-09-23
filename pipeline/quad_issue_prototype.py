@@ -23,9 +23,9 @@ class Simulator:
 
         self.IF = IFU.IFU(self.memory, reg_type(data.entry_pc), 4)
         self.ID = IDU.IDU()
-        self.ROB = ROB.reorder_buffer(80, self.reg, 8)
+        self.lsu = LSU.LSU(self.memory)
+        self.ROB = ROB.reorder_buffer(80, self.reg, self.lsu, 8)
         self.EX = EX.EX()
-        self.load_store_unit = LSU.LSU(self.memory)
 
         self.linkages = [
             "IF->ID",
@@ -55,8 +55,6 @@ class Simulator:
             )
             if src.valid and dst.ready:
                 src.data, dst.data = None, src.data
-                if dst.name == "EX->[ROB]":
-                    dst.data = self.load_store_unit.tick(dst.data).step()
                 src.update_status()
                 dst.update_status()
 
@@ -76,9 +74,6 @@ class Simulator:
 
         self.EX.step()
 
-        # 2) Implictly access memory
-        self.load_store_unit.step()
-
         # self.reg.print_registers()
 
     def flush(self):
@@ -90,7 +85,6 @@ class Simulator:
         self.ID.flush()
         self.ROB.flush()
         self.EX.flush()
-        self.load_store_unit.flush()
 
 
 DEBUG_PRINT = os.environ.get('DEBUG_PRINT') is not None
@@ -152,8 +146,6 @@ def main(argv):
                 cpu.flush()
 
             cpu.cycle += 1
-            # if cpu.cycle % 5000 == 0: 
-            #     print("cycle {} @ {}".format(cpu.cycle, hex(cpu.IF.fetch_pc)))
 
             # TODO: for riscv-test isa test only
             if IS_RISCV_TEST:
@@ -172,6 +164,7 @@ def main(argv):
                 tohost_data = cpu.memory.read_bytes(cpu.tohost_addr,4)
                 if tohost_data != 0:
                     if tohost_data & reg_type(0x1) == reg_type(0x1):
+                        print("{}".format(hex(tohost_data)))
                         print("cycles = {}".format(cpu.cycle))
                         break
                     if tohost_data >= 0x80000000: 

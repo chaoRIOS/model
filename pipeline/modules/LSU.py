@@ -25,24 +25,26 @@ class LSU(Module):
         return self.output_port
 
     # Handle results from EX stage
-    def op(self, port_data):
-        for issue_queue_data in port_data["results"]:
-            for data in issue_queue_data:
-                # load store
-                if "load_mem" in data:
-                    for load_request in data["load_mem"]:
-                        data["write_regs"]["int"][0]["value"] = self.memory.read_bytes(
-                            load_request["addr"],
-                            load_request["len"],
-                            sign_extend=data["name"] in ["LB", "LH", "LW"],
-                        )
+    # def op(self, port_data):
+    #     for issue_queue_data in port_data["results"]:
+    #         for data in issue_queue_data:
+    def op(self, data):
+        # load store
+        if "load_mem" in data:
+            for load_request in data["load_mem"]:
+                data["write_regs"]["int"][0]["value"] = self.memory.read_bytes(
+                    load_request["addr"],
+                    load_request["len"],
+                    sign_extend=data["name"] in ["LB", "LH", "LW"],
+                )
 
-                if "store_mem" in data:
-                    for store_request in data["store_mem"]:
-                        self.memory.write_bytes(
-                            store_request["addr"],
-                            store_request["len"],
-                            store_request["value"],
-                        )
+        if "store_mem" in data:
+            for store_request in data["store_mem"]:
+                self.memory.write_bytes(
+                    store_request["addr"],
+                    store_request["len"],
+                    store_request["value"],
+                )
 
-        return port_data
+        return data
+        # return port_data
