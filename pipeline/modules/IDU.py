@@ -12,7 +12,10 @@ class IDU(Module):
         super().__init__()
         self.ports = {
             "input": {"IF": Port("IF->[ID]")},
-            "output": {"ROB": Port("[ID]->ROB")},
+            "output": {
+                "ROB": Port("[ID]->ROB"),
+                "IF": Port("[ID]->IF"),
+            },
         }
 
     def step(self):
@@ -35,6 +38,12 @@ class IDU(Module):
             inst["insn_code"] = hex(data["word"])
             inst["insn_len"] = 2 if data['is_compressed'] else 4
             results.append(inst)
+            if inst['name'] == ['JAL']:
+                self.ports['output']['IF'].data = inst
+                self.ports['output']['IF'].data['next_pc'] = inst['pc'] + inst['imm'][0]
+                self.ports['output']['IF'].update_status()
+                break
+
         if results == []:
             results = None
         return results

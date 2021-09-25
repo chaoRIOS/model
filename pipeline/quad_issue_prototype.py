@@ -191,6 +191,7 @@ def main(argv):
         et = time.time()
 
         print("Model run time: {} seconds".format(et - st))
+        print("miss{}/total{}".format(cpu.IF.miss, cpu.ROB.branch))
         break
 
 if __name__ == "__main__":

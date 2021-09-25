@@ -159,6 +159,9 @@ class reorder_buffer(Module):
         # Configurable issue number
         self.issue_number = issue_number
 
+        self.branch = 0
+
+
     # Entry updating methods
     def has_free_entry(self):
         assert len(self.free_entry_index) + len(self.busy_entry_index) == self.size
@@ -539,6 +542,20 @@ class reorder_buffer(Module):
 
                     # Branch controlling logic
                     # TODO: Exception handling
+
+                    if data['name'] in [
+                        "BNE",
+                        "BEQ",
+                        "BLT",
+                        "BGE",
+                        "BLTU",
+                        "BGEU",
+                        "JAL",
+                        "JALR",
+                    ]:
+                        self.branch +=1
+
+
                     if (
                         (
                             data["name"]

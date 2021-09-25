@@ -7,14 +7,14 @@ function_unit_numbers = [
         "DIV": 4,
         # Other function units in cluster
         "CSR": 1,
-        # "AGU": 1,
+        "AGU": 1,
         "BR": 1,
     },
     {
         "ALU": 1,
         "MUL": 4,
         "DIV": 4,
-        # "AGU": 1,
+        "AGU": 1,
     },
     {
         "ALU": 1,

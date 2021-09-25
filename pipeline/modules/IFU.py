@@ -14,8 +14,13 @@ class IFU(Module):
         self.memory = memory
         self.issue_number = issue_number
 
+        self.miss = 0
+
         self.ports = {
-            "input": {"ROB": Port("ROB->[IF]")},
+            "input": {
+                "ROB": Port("ROB->[IF]"),
+                "ID": Port("ID->[IF]")
+                },
             "output": {"ID": Port("[IF]->ID")},
         }
 
@@ -24,6 +29,13 @@ class IFU(Module):
             self.fetch_pc = self.ports["input"]["ROB"].data["next_pc"]
             self.ports["input"]["ROB"].data = None
             self.ports["input"]["ROB"].update_status()
+            self.miss += 1
+
+        elif self.ports["input"]["ID"].valid:
+            self.fetch_pc = self.ports["input"]["ID"].data["next_pc"]
+            self.ports["input"]["ID"].data = None
+            self.ports["input"]["ID"].update_status()
+
 
         if self.ports["output"]["ID"].ready:
             self.ports["output"]["ID"].data = []
@@ -49,6 +61,9 @@ class IFU(Module):
     def flush(self, data):
         self.ports["output"]["ID"].data = None
         self.ports["output"]["ID"].update_status()
+
+        self.ports["input"]["ID"].data = None
+        self.ports["input"]["ID"].update_status()
 
         # Hold input port
         self.ports["input"]["ROB"].data = data
