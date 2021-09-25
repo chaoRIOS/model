@@ -8,6 +8,9 @@ pub mod memory;
 use elf_analyzer::ElfAnalyzer;
 use memory::Memory;
 
+pub const DRAM_BASE: u64 = 0x80000000;
+
+
 #[pymodule]
 fn elfparser(_py: Python, m: &PyModule) -> PyResult<()> {
     // PyO3 aware function. All of our Python interfaces could be declared in a separate module.
@@ -104,7 +107,7 @@ fn load_elf(elf_path: String, capacity: u64) -> std::io::Result<ElfContext> {
             for j in 0..sh_size {
                 elf_context.memory.write_byte(
                     // @TODO: add different masks for different memory models
-                    (sh_addr + j as u64) & 0x7f_ffff_ffff,
+                    ((sh_addr + j as u64) & 0x7f_ffff_ffff) - DRAM_BASE,
                     analyzer.read_byte(sh_offset + j),
                 );
             }

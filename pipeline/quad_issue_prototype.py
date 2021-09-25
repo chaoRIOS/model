@@ -4,6 +4,8 @@ import sys
 import os
 import numpy as np
 import getopt
+import time
+import warnings
 
 sys.path.append("..")
 
@@ -19,7 +21,7 @@ class Simulator:
         self.cycle = 1
 
         self.reg = REG.PhysicalRegisterFile(100)
-        self.memory = MEM.Memory(data.memory.data)
+        self.memory = MEM.Memory(np.array(data.memory.data, dtype=np.uint64))
 
         self.IF = IFU.IFU(self.memory, reg_type(data.entry_pc), 4)
         self.ID = IDU.IDU()
@@ -29,6 +31,7 @@ class Simulator:
 
         self.linkages = [
             "IF->ID",
+            "ID->IF",
             "ID->ROB",
             "ROB->EX",
             "EX->ROB",
@@ -92,6 +95,7 @@ IS_RISCV_TEST = False
 def main(argv):
     global DEBUG_PRINT
     riscv_tests_index = 0
+    warnings.filterwarnings('ignore')
 
     try:
         opts, args = getopt.getopt(argv, "hdi:", ["index="])
@@ -120,7 +124,7 @@ def main(argv):
     # pt	                    virtual memory is disabled, timer interrupt fires every 100 cycles
     # v	                        virtual memory is enabled
     rv64ui_p_tests = [
-        i
+        riscv_tests_path + i
         for i in os.listdir(riscv_tests_path)
         if "rv64ui" in i and "-p-" in i and "dump" not in i
     ]
@@ -137,9 +141,11 @@ def main(argv):
 
 
     for test in [benchmarks_path + "dhrystone.riscv"]:
+    # for test in ["/opt/riscv-tests/coremark/coremark.riscv"]:
     # for test in rv64ui_p_tests[riscv_tests_index:]:
         cpu = Simulator(load_elf(test, 2049 * 1024 * 1024))
 
+        st = time.time()
         while cpu.exit is not True:
             cpu.tick()
             if cpu.step() is True:
@@ -161,28 +167,30 @@ def main(argv):
 
                     break
             else:
-                tohost_data = cpu.memory.read_bytes(cpu.tohost_addr,4)
+                tohost_data = cpu.memory.read_bytes(cpu.tohost_addr,4,False)
                 if tohost_data != 0:
-                    if tohost_data & reg_type(0x1) == reg_type(0x1):
+                    if reg_type(tohost_data) & reg_type(0x1) == reg_type(0x1):
                         print("{}".format(hex(tohost_data)))
                         print("cycles = {}".format(cpu.cycle))
                         break
                     if tohost_data >= 0x80000000: 
                         # Address of tohost data
-                        flag1 = cpu.memory.read_bytes(24 + tohost_data, 4)
-                        flag2 = cpu.memory.read_bytes(28 + tohost_data, 4)
+                        flag1 = cpu.memory.read_bytes(24 + tohost_data, 4,False)
+                        flag2 = cpu.memory.read_bytes(28 + tohost_data, 4,False)
 
                         if (flag1 != 0) or (flag2 != 0):
-                            base = cpu.memory.read_bytes(4 * 4 + tohost_data, 4)
-                            length = cpu.memory.read_bytes(6 * 4 + tohost_data, 4)
+                            base = cpu.memory.read_bytes(4 * 4 + tohost_data, 4,False)
+                            length = cpu.memory.read_bytes(6 * 4 + tohost_data, 4,False)
                             for i in range(length):
                                 # TODO: decode
-                                char = cpu.memory.read_bytes(i + base, 1)
+                                char = cpu.memory.read_bytes(i + base, 1,False)
                                 print(chr(char), end='')
                             cpu.memory.write_bytes(reg_type(cpu.tohost_addr + 0x40), 4, reg_type(1))
                             cpu.memory.write_bytes(reg_type(cpu.tohost_addr), 4, reg_type(0))
 
+        et = time.time()
 
+        print("Model run time: {} seconds".format(et - st))
         break
 
 if __name__ == "__main__":
