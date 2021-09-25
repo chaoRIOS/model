@@ -370,7 +370,9 @@ def SRA(data):
     shamt = reg_type(data["read_regs"]["int"][1]["value"]) & reg_type(0x3F)
     data["write_regs"]["int"][0]["value"] = reg_type(
         (reg_type(data["read_regs"]["int"][0]["value"]) >> shamt)
-        | reg_type(int(str(sign) * shamt + "0" * int(reg_type(0).itemsize * 8 - shamt), 2))
+        | reg_type(
+            int(str(sign) * shamt + "0" * int(reg_type(0).itemsize * 8 - shamt), 2)
+        )
     )
     return data
 

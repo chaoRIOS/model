@@ -15,6 +15,7 @@ from utils.elf_parser import load_elf
 
 from modules import *
 
+
 class Simulator:
     def __init__(self, data):
         self.tohost_addr = data.tohost_addr
@@ -45,9 +46,9 @@ class Simulator:
         # debug logging
         if DEBUG_PRINT:
             print("-" * 10, "tick @ cycle:", self.cycle, "-" * 10)
-        
+
         # update MCYCLE
-        self.reg.write_csr(0xb00, reg_type(self.cycle))
+        self.reg.write_csr(0xB00, reg_type(self.cycle))
 
         # Propagation
         for linkage in self.linkages:
@@ -90,12 +91,14 @@ class Simulator:
         self.EX.flush()
 
 
-DEBUG_PRINT = os.environ.get('DEBUG_PRINT') is not None
+DEBUG_PRINT = os.environ.get("DEBUG_PRINT") is not None
 IS_RISCV_TEST = False
+
+
 def main(argv):
     global DEBUG_PRINT
     riscv_tests_index = 0
-    warnings.filterwarnings('ignore')
+    warnings.filterwarnings("ignore")
 
     try:
         opts, args = getopt.getopt(argv, "hdi:", ["index="])
@@ -107,8 +110,8 @@ def main(argv):
             print("prototype.py [-i <riscv_tests_index=0>] [-d]")
             sys.exit()
         elif opt in ("-d", "--debug"):
-            os.environ['DEBUG_PRINT'] = "True"
-            DEBUG_PRINT = (os.environ.get('DEBUG_PRINT') is not None)
+            os.environ["DEBUG_PRINT"] = "True"
+            DEBUG_PRINT = os.environ.get("DEBUG_PRINT") is not None
 
         elif opt in ("-i", "--index"):
             riscv_tests_index = int(arg)
@@ -130,7 +133,8 @@ def main(argv):
     ]
 
     benchmarks_path = (
-        os.path.expanduser("~") + "/work/riscv-tests/build-rv64i/share/riscv-tests/benchmarks/"
+        os.path.expanduser("~")
+        + "/work/riscv-tests/build-rv64i/share/riscv-tests/benchmarks/"
     )
 
     benchmarks = [
@@ -139,10 +143,9 @@ def main(argv):
         if "rv64ui" in i and "-p-" in i and "dump" not in i
     ]
 
-
     for test in [benchmarks_path + "dhrystone.riscv"]:
-    # for test in ["/opt/riscv-tests/coremark/coremark.riscv"]:
-    # for test in rv64ui_p_tests[riscv_tests_index:]:
+        # for test in ["/opt/riscv-tests/coremark/coremark.riscv"]:
+        # for test in rv64ui_p_tests[riscv_tests_index:]:
         cpu = Simulator(load_elf(test, 2049 * 1024 * 1024))
 
         st = time.time()
@@ -162,37 +165,46 @@ def main(argv):
                         print("Test {} Passed".format(test))
                     else:
                         print(
-                            "Test {} Failed at test[{}]".format(test, endcode >> byte_type(1))
+                            "Test {} Failed at test[{}]".format(
+                                test, endcode >> byte_type(1)
+                            )
                         )
 
                     break
             else:
-                tohost_data = cpu.memory.read_bytes(cpu.tohost_addr,4,False)
+                tohost_data = cpu.memory.read_bytes(cpu.tohost_addr, 4, False)
                 if tohost_data != 0:
                     if reg_type(tohost_data) & reg_type(0x1) == reg_type(0x1):
                         print("{}".format(hex(tohost_data)))
                         print("cycles = {}".format(cpu.cycle))
                         break
-                    if tohost_data >= 0x80000000: 
+                    if tohost_data >= 0x80000000:
                         # Address of tohost data
-                        flag1 = cpu.memory.read_bytes(24 + tohost_data, 4,False)
-                        flag2 = cpu.memory.read_bytes(28 + tohost_data, 4,False)
+                        flag1 = cpu.memory.read_bytes(24 + tohost_data, 4, False)
+                        flag2 = cpu.memory.read_bytes(28 + tohost_data, 4, False)
 
                         if (flag1 != 0) or (flag2 != 0):
-                            base = cpu.memory.read_bytes(4 * 4 + tohost_data, 4,False)
-                            length = cpu.memory.read_bytes(6 * 4 + tohost_data, 4,False)
+                            base = cpu.memory.read_bytes(4 * 4 + tohost_data, 4, False)
+                            length = cpu.memory.read_bytes(
+                                6 * 4 + tohost_data, 4, False
+                            )
                             for i in range(length):
                                 # TODO: decode
-                                char = cpu.memory.read_bytes(i + base, 1,False)
-                                print(chr(char), end='')
-                            cpu.memory.write_bytes(reg_type(cpu.tohost_addr + 0x40), 4, reg_type(1))
-                            cpu.memory.write_bytes(reg_type(cpu.tohost_addr), 4, reg_type(0))
+                                char = cpu.memory.read_bytes(i + base, 1, False)
+                                print(chr(char), end="")
+                            cpu.memory.write_bytes(
+                                reg_type(cpu.tohost_addr + 0x40), 4, reg_type(1)
+                            )
+                            cpu.memory.write_bytes(
+                                reg_type(cpu.tohost_addr), 4, reg_type(0)
+                            )
 
         et = time.time()
 
         print("Model run time: {} seconds".format(et - st))
         print("miss{}/total{}".format(cpu.IF.miss, cpu.ROB.branch))
         break
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])

@@ -34,7 +34,7 @@ class Simulator:
 
     def tick(self):
         self.cycle += 1
-        self.csr[0xb00] = self.cycle
+        self.csr[0xB00] = self.cycle
         pass
 
     def read_register(self, register_type, index):
@@ -133,7 +133,8 @@ def main(argv):
     ]
 
     benchmarks_path = (
-        os.path.expanduser("~") + "/work/riscv-tests/build-rv64i/share/riscv-tests/benchmarks/"
+        os.path.expanduser("~")
+        + "/work/riscv-tests/build-rv64i/share/riscv-tests/benchmarks/"
     )
 
     benchmarks = [
@@ -144,7 +145,7 @@ def main(argv):
 
     for test in [benchmarks_path + "dhrystone.riscv"]:
 
-    # for test in rv64ui_p_tests[riscv_tests_index:]:
+        # for test in rv64ui_p_tests[riscv_tests_index:]:
         cpu = Simulator(load_elf(test, 2049 * 1024 * 1024))
 
         while cpu.read_byte(cpu.tohost_addr) == 0:
@@ -217,7 +218,7 @@ def main(argv):
 
             # branch
             if "next_pc" in execute_result:
-                cpu.fetch_pc = reg_type(execute_result["next_pc"])                    
+                cpu.fetch_pc = reg_type(execute_result["next_pc"])
 
             cpu.tick()
 
@@ -232,12 +233,12 @@ def main(argv):
             #             "Test {} Failed at test[{}]".format(test, endcode >> byte_type(1))
             #         )
 
-            tohost_data = cpu.read_bytes(cpu.tohost_addr,4)
+            tohost_data = cpu.read_bytes(cpu.tohost_addr, 4)
             if tohost_data != 0:
                 if tohost_data & reg_type(0x1) == reg_type(0x1):
                     print("cycles = {}".format(cpu.cycle))
                     break
-                if tohost_data >= 0x80000000: 
+                if tohost_data >= 0x80000000:
                     # Address of tohost data
                     flag1 = cpu.read_bytes(reg_type(24 + tohost_data), 4)
                     flag2 = cpu.read_bytes(reg_type(28 + tohost_data), 4)
@@ -248,12 +249,13 @@ def main(argv):
                         for i in range(length):
                             # TODO: decode
                             char = cpu.read_bytes(reg_type(i + base), 1)
-                            print(chr(char), end='')
+                            print(chr(char), end="")
 
-                        cpu.write_bytes(reg_type(cpu.tohost_addr + 0x40), 4, reg_type(1))
+                        cpu.write_bytes(
+                            reg_type(cpu.tohost_addr + 0x40), 4, reg_type(1)
+                        )
                         cpu.write_bytes(reg_type(cpu.tohost_addr), 4, reg_type(0))
                         # break
-        
 
         # break
 

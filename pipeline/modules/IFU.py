@@ -17,10 +17,7 @@ class IFU(Module):
         self.miss = 0
 
         self.ports = {
-            "input": {
-                "ROB": Port("ROB->[IF]"),
-                "ID": Port("ID->[IF]")
-                },
+            "input": {"ROB": Port("ROB->[IF]"), "ID": Port("ID->[IF]")},
             "output": {"ID": Port("[IF]->ID")},
         }
 
@@ -36,18 +33,17 @@ class IFU(Module):
             self.ports["input"]["ID"].data = None
             self.ports["input"]["ID"].update_status()
 
-
         if self.ports["output"]["ID"].ready:
             self.ports["output"]["ID"].data = []
             for i in range(self.issue_number):
                 self.pc = self.fetch_pc
                 data = self.op()
-                self.fetch_pc += (reg_type(2) if data['is_compressed'] else reg_type(4))
+                self.fetch_pc += reg_type(2) if data["is_compressed"] else reg_type(4)
                 self.ports["output"]["ID"].data.append(data)
             self.ports["output"]["ID"].update_status()
 
     def op(self):
-        inst_word = word_type(self.memory.read_bytes(self.fetch_pc, 4,False))
+        inst_word = word_type(self.memory.read_bytes(self.fetch_pc, 4, False))
         is_compressed = inst_word & word_type(0x3) != word_type(0x3)
         if is_compressed:
             # Compressed

@@ -32,16 +32,16 @@ class IDU(Module):
         for data in port_data:
             inst = decode_word(data["word"])
             # TODO: Handle decoding error
-            if 'decode_error' in inst:
+            if "decode_error" in inst:
                 break
             inst["pc"] = data["pc"]
             inst["insn_code"] = hex(data["word"])
-            inst["insn_len"] = 2 if data['is_compressed'] else 4
+            inst["insn_len"] = 2 if data["is_compressed"] else 4
             results.append(inst)
-            if inst['name'] == ['JAL']:
-                self.ports['output']['IF'].data = inst
-                self.ports['output']['IF'].data['next_pc'] = inst['pc'] + inst['imm'][0]
-                self.ports['output']['IF'].update_status()
+            if inst["name"] == ["JAL"]:
+                self.ports["output"]["IF"].data = inst
+                self.ports["output"]["IF"].data["next_pc"] = inst["pc"] + inst["imm"][0]
+                self.ports["output"]["IF"].update_status()
                 break
 
         if results == []:

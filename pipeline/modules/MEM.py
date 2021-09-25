@@ -11,9 +11,8 @@ from numba.experimental import jitclass
 
 DRAM_BASE = reg_type(0x80000000)
 
-@jitclass([
-    ('mem', types.ListType(types.uint64))
-])
+
+@jitclass([("mem", types.ListType(types.uint64))])
 class Memory:
     def __init__(self, mem) -> None:
         # self.mem = mem
@@ -46,8 +45,8 @@ class Memory:
             )
         if sign_extend is True:
             sign = reg_type(data >> reg_type(width * 8 - 1)) & reg_type(0x1)
-            if sign != 0:     
-                data = reg_type(data) | reg_type( 
+            if sign != 0:
+                data = reg_type(data) | reg_type(
                     reg_type(np.invert(reg_type(0))) << reg_type(width * 8)
                 )
         return reg_type(data)

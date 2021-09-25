@@ -14,6 +14,7 @@ from config.function_unit_types import function_unit_types
 from module_base import Module, Port
 from . import FU
 
+
 class reorder_buffer(Module):
 
     # Subclass ROBEntry
@@ -161,7 +162,6 @@ class reorder_buffer(Module):
 
         self.branch = 0
 
-
     # Entry updating methods
     def has_free_entry(self):
         assert len(self.free_entry_index) + len(self.busy_entry_index) == self.size
@@ -233,22 +233,22 @@ class reorder_buffer(Module):
 
         self.allocate()
 
-        if os.environ.get('DEBUG_PRINT') is not None:
+        if os.environ.get("DEBUG_PRINT") is not None:
             print("Busy:{}".format(len(self.busy_entry_index)), self.busy_entry_index)
-        if os.environ.get('DEBUG_PRINT') is not None:
+        if os.environ.get("DEBUG_PRINT") is not None:
             print(
-            "Inflight:{}".format(len(self.inflight_entry_index)),
-            self.inflight_entry_index,
-        )
+                "Inflight:{}".format(len(self.inflight_entry_index)),
+                self.inflight_entry_index,
+            )
 
         self.wake_up()
 
         self.issue()
-        if os.environ.get('DEBUG_PRINT') is not None:
+        if os.environ.get("DEBUG_PRINT") is not None:
             print(
-            "Inflight:{}".format(len(self.inflight_entry_index)),
-            self.inflight_entry_index,
-        )
+                "Inflight:{}".format(len(self.inflight_entry_index)),
+                self.inflight_entry_index,
+            )
 
         self.tick_function_unit_status()
 
@@ -340,22 +340,22 @@ class reorder_buffer(Module):
                 max_issue_number = 2
                 # Add issue window size limit
                 issue_window = 8
-                if os.environ.get('DEBUG_PRINT') is not None:
+                if os.environ.get("DEBUG_PRINT") is not None:
                     print(
-                    "Issue from queue[{}]: {}".format(
-                        issue_queue_index, list(issue_queue)[0:issue_window]
+                        "Issue from queue[{}]: {}".format(
+                            issue_queue_index, list(issue_queue)[0:issue_window]
+                        )
                     )
-                )
                 for entry_in_queue_index, entry_index in enumerate(
                     list(issue_queue)[0:issue_window]
                 ):
                     if issue_number >= max_issue_number:
-                        if os.environ.get('DEBUG_PRINT') is not None:
+                        if os.environ.get("DEBUG_PRINT") is not None:
                             print(
-                            "Issue queue[{}] met max issue number".format(
-                                issue_queue_index
+                                "Issue queue[{}] met max issue number".format(
+                                    issue_queue_index
+                                )
                             )
-                        )
                         break
 
                     # Check entries ready for issue
@@ -377,15 +377,15 @@ class reorder_buffer(Module):
                             entry_in_queue_index,
                         )
                         if function_unit_index is not None:
-                            if os.environ.get('DEBUG_PRINT') is not None:
+                            if os.environ.get("DEBUG_PRINT") is not None:
                                 print(
-                                "issueing:[{}] from queue[{}]".format(
-                                    entry_index, issue_queue_index
-                                ),
-                                hex(self.entries[entry_index].data["pc"]),
-                                self.entries[entry_index].data["name"],
-                                self.entries[entry_index],
-                            )
+                                    "issueing:[{}] from queue[{}]".format(
+                                        entry_index, issue_queue_index
+                                    ),
+                                    hex(self.entries[entry_index].data["pc"]),
+                                    self.entries[entry_index].data["name"],
+                                    self.entries[entry_index],
+                                )
                             # Add FU info
                             self.entries[entry_index].data[
                                 "function_unit_index"
@@ -429,38 +429,38 @@ class reorder_buffer(Module):
                             issue_number += 1
                             total_issue_number += 1
                         else:
-                            if os.environ.get('DEBUG_PRINT') is not None:
+                            if os.environ.get("DEBUG_PRINT") is not None:
                                 print(
-                                "Cant issue[{}] from queue[{}] because FU not ready".format(
+                                    "Cant issue[{}] from queue[{}] because FU not ready".format(
+                                        entry_index, issue_queue_index
+                                    ),
+                                    hex(self.entries[entry_index].data["pc"]),
+                                    self.entries[entry_index].data["name"],
+                                )
+                    else:
+                        if os.environ.get("DEBUG_PRINT") is not None:
+                            print(
+                                "Cant issue[{}] from queue[{}] because".format(
                                     entry_index, issue_queue_index
                                 ),
+                                end=" ",
+                            )
+                        if not (self.entries[entry_index].ex is False):
+                            if os.environ.get("DEBUG_PRINT") is not None:
+                                print("executed", end=" ")
+                        elif not (self.entries[entry_index].is_ready()):
+                            if os.environ.get("DEBUG_PRINT") is not None:
+                                print("register not ready", end=" ")
+                        elif not (self.entries[entry_index].inflight is False):
+                            if os.environ.get("DEBUG_PRINT") is not None:
+                                print("inflight", end=" ")
+                        if os.environ.get("DEBUG_PRINT") is not None:
+                            print(
                                 hex(self.entries[entry_index].data["pc"]),
                                 self.entries[entry_index].data["name"],
                             )
-                    else:
-                        if os.environ.get('DEBUG_PRINT') is not None:
-                            print(
-                            "Cant issue[{}] from queue[{}] because".format(
-                                entry_index, issue_queue_index
-                            ),
-                            end=" ",
-                        )
-                        if not (self.entries[entry_index].ex is False):
-                            if os.environ.get('DEBUG_PRINT') is not None:
-                                print("executed", end=" ")
-                        elif not (self.entries[entry_index].is_ready()):
-                            if os.environ.get('DEBUG_PRINT') is not None:
-                                print("register not ready", end=" ")
-                        elif not (self.entries[entry_index].inflight is False):
-                            if os.environ.get('DEBUG_PRINT') is not None:
-                                print("inflight", end=" ")
-                        if os.environ.get('DEBUG_PRINT') is not None:
-                                print(
-                            hex(self.entries[entry_index].data["pc"]),
-                            self.entries[entry_index].data["name"],
-                        )
 
-            if os.environ.get('DEBUG_PRINT') is not None:
+            if os.environ.get("DEBUG_PRINT") is not None:
                 print("total_issue_number", total_issue_number)
             if total_issue_number > 0:
                 self.ports["output"]["EX"].update_status()
@@ -475,12 +475,12 @@ class reorder_buffer(Module):
             for i in range(self.issue_number):
                 entry = self.entries[self.busy_entry_index[0]]
                 if entry.is_complete():
-                    if os.environ.get('DEBUG_PRINT') is not None:
+                    if os.environ.get("DEBUG_PRINT") is not None:
                         print(
-                        "committing:[{}]".format(self.busy_entry_index[0]),
-                        hex(entry.data["pc"]),
-                        entry.data["name"],
-                    )
+                            "committing:[{}]".format(self.busy_entry_index[0]),
+                            hex(entry.data["pc"]),
+                            entry.data["name"],
+                        )
                     data = entry.data
 
                     # Update CSR
@@ -492,20 +492,9 @@ class reorder_buffer(Module):
                                         write_reg["index"],
                                         reg_type(write_reg["value"]),
                                     )
-                        
+
                     # Load/Store controlling logic
-                    if (
-                        data['name']
-                        in [
-                            "LB",
-                            "LH",
-                            "LW",
-                            "LBU",
-                            "LHU",
-                            "LWU",
-                            "LD"
-                        ]
-                    ):
+                    if data["name"] in ["LB", "LH", "LW", "LBU", "LHU", "LWU", "LD"]:
                         data = self.lsu.tick(data).step()
                         # GPR
                         if "int" in data["write_regs"]:
@@ -514,20 +503,11 @@ class reorder_buffer(Module):
                                     write_reg["index"] is not None
                                 ):
                                     self.physical_register_file.write_physical_register(
-                                        self.entries[data['ROB_entry']].PRd,
+                                        self.entries[data["ROB_entry"]].PRd,
                                         reg_type(write_reg["value"]),
                                     )
-                    elif (
-                        data['name']
-                        in [
-                            "SB",
-                            "SH",
-                            "SW",
-                            "SD"
-                        ]
-                    ):
+                    elif data["name"] in ["SB", "SH", "SW", "SD"]:
                         data = self.lsu.tick(data).step()
-
 
                     # deallocate LPRD
                     self.physical_register_file.deallocate_register(entry.LPRd)
@@ -543,7 +523,7 @@ class reorder_buffer(Module):
                     # Branch controlling logic
                     # TODO: Exception handling
 
-                    if data['name'] in [
+                    if data["name"] in [
                         "BNE",
                         "BEQ",
                         "BLT",
@@ -553,8 +533,7 @@ class reorder_buffer(Module):
                         "JAL",
                         "JALR",
                     ]:
-                        self.branch +=1
-
+                        self.branch += 1
 
                     if (
                         (
@@ -750,13 +729,15 @@ class reorder_buffer(Module):
                 # fill ROB entry
                 self.fill_entry(data, entry_index)
 
-                if os.environ.get('DEBUG_PRINT') is not None:
-                        print(
-                    "ROB[{}] Q[{}]".format(entry_index, self.get_issue_queue_id(data)),
-                    hex(self.entries[entry_index].data["pc"]),
-                    self.entries[entry_index].data["name"],
-                    self.entries[entry_index],
-                )
+                if os.environ.get("DEBUG_PRINT") is not None:
+                    print(
+                        "ROB[{}] Q[{}]".format(
+                            entry_index, self.get_issue_queue_id(data)
+                        ),
+                        hex(self.entries[entry_index].data["pc"]),
+                        self.entries[entry_index].data["name"],
+                        self.entries[entry_index],
+                    )
 
                 # enqueue this entry
                 self.issue_queues[self.get_issue_queue_id(data)].append(entry_index)
@@ -777,13 +758,13 @@ class reorder_buffer(Module):
             for i, data in enumerate(queue_data):
                 entry_index = data["ROB_entry"]
                 self.entries[entry_index].data = data
-                if os.environ.get('DEBUG_PRINT') is not None:
+                if os.environ.get("DEBUG_PRINT") is not None:
                     print(
-                    "writing back:[{}]".format(entry_index),
-                    hex(self.entries[entry_index].data["pc"]),
-                    self.entries[entry_index].data["name"],
-                    self.entries[entry_index],
-                )
+                        "writing back:[{}]".format(entry_index),
+                        hex(self.entries[entry_index].data["pc"]),
+                        self.entries[entry_index].data["name"],
+                        self.entries[entry_index],
+                    )
                 self.inflight_entry_index.remove(entry_index)
                 # # FU_status
                 # self.function_unit_status[data['function_unit_type']][data['function_unit_index']]['latency'] = None

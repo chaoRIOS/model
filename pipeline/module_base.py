@@ -66,7 +66,7 @@ class Port:
         self.valid = self.data is not None
         self.ready = self.data is None
 
-        if os.environ.get('DEBUG_PRINT') is not None:
+        if os.environ.get("DEBUG_PRINT") is not None:
             self.print()
 
     def print(self):
