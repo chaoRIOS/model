@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import sys
+import os
 
 from numpy.lib.arraysetops import isin
 
@@ -65,7 +66,8 @@ class Port:
         self.valid = self.data is not None
         self.ready = self.data is None
 
-        # self.print()
+        if os.environ.get("DEBUG_PRINT") is not None:
+            self.print()
 
     def print(self):
         print("{}: [valid:{} ready:{}]".format(self.name, self.valid, self.ready))
@@ -79,14 +81,15 @@ class Port:
         # TODO: Trap info
         if isinstance(data, dict):
             if "results" in data:
-                for item in data["results"]:
-                    print("  [")
-                    for k, v in item.items():
-                        if isinstance(v, word_type) or isinstance(v, double_type):
-                            print("    {}: {:08x}".format(k, v))
-                        else:
-                            print("    {}: {}".format(k, str(v)))
-                    print("  ]")
+                for issue_queue_data in data["results"]:
+                    for item in issue_queue_data:
+                        print("  [")
+                        for k, v in item.items():
+                            if isinstance(v, word_type) or isinstance(v, double_type):
+                                print("    {}: {:08x}".format(k, v))
+                            else:
+                                print("    {}: {}".format(k, str(v)))
+                        print("  ]")
             else:
                 print("  [")
                 for k, v in data.items():
@@ -95,12 +98,25 @@ class Port:
                     else:
                         print("    {}: {}".format(k, str(v)))
                 print("  ]")
-        else:
-            for item in data:
-                print("  [")
-                for k, v in item.items():
-                    if isinstance(v, word_type) or isinstance(v, double_type):
-                        print("    {}: {:08x}".format(k, v))
-                    else:
-                        print("    {}: {}".format(k, str(v)))
-                print("  ]")
+
+        elif isinstance(data, list):
+            if isinstance(data[0], dict):
+                for item in data:
+                    print("  [")
+                    for k, v in item.items():
+                        if isinstance(v, word_type) or isinstance(v, double_type):
+                            print("    {}: {:08x}".format(k, v))
+                        else:
+                            print("    {}: {}".format(k, str(v)))
+                    print("  ]")
+            elif isinstance(data[0], list):
+                for issue_queue_index, issue_queue_data in enumerate(data):
+                    print("Issue queue[{}]".format(issue_queue_index))
+                    for item in issue_queue_data:
+                        print("  [")
+                        for k, v in item.items():
+                            if isinstance(v, word_type) or isinstance(v, double_type):
+                                print("    {}: {:08x}".format(k, v))
+                            else:
+                                print("    {}: {}".format(k, str(v)))
+                        print("  ]")

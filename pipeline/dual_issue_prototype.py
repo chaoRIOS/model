@@ -63,8 +63,11 @@ class Simulator:
         print("-" * 10, "tick @ cycle:", self.cycle, "-" * 10)
 
         for linkage in self.linkages:
-            src, dst = linkage.split('->')
-            src, dst = getattr(self, src).ports['output'][dst], getattr(self, dst).ports['input'][src]
+            src, dst = linkage.split("->")
+            src, dst = (
+                getattr(self, src).ports["output"][dst],
+                getattr(self, dst).ports["input"][src],
+            )
             if src.valid and dst.ready:
                 src.data, dst.data = None, src.data
                 if dst.name == "EX->[ROB]":
